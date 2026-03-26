@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mountain Fire Warning System</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+  <main class="app-shell">
+    <section class="alert-ribbon glass">
+      <div class="alert-title">Live Alert Board</div>
+      <div id="alert-strip" class="alert-strip"></div>
+    </section>
+
+    <section class="dashboard system-dashboard">
+      <aside class="left-panel glass">
+        <div class="panel-header">
+          <h2>Control Panel</h2>
+          <p>Default map mode is heatmap. Switch views only when you need deeper inspection.</p>
+        </div>
+        <div class="control-group time-group">
+          <label for="time-slider">Time Playback</label>
+          <div class="time-controls">
+            <button id="play-btn" class="chip active">Pause</button>
+            <div id="time-label" class="map-mode">06:00</div>
+          </div>
+          <input id="time-slider" type="range" min="0" max="7" step="1" value="0">
+        </div>
+        <div class="control-group">
+          <label for="view-select">Map View</label>
+          <select id="view-select">
+            <option value="heat">Heatmap</option>
+            <option value="corridor">Corridor Focus</option>
+            <option value="terrain">Terrain</option>
+            <option value="cells">Risk Grid</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label for="layer-select">Grid Layer</label>
+          <select id="layer-select">
+            <option value="risk">Final Risk</option>
+            <option value="elevation">Elevation</option>
+            <option value="slope">Slope</option>
+            <option value="wind">Wind Speed</option>
+            <option value="dryness">Fuel Dryness</option>
+          </select>
+        </div>
+        <div class="control-group toggle-group">
+          <button id="toggle-lines" class="chip active">Curved Corridors</button>
+          <button id="toggle-watchpoints" class="chip">Watch Zones</button>
+          <button id="toggle-hotspots" class="chip">Hotspot Halo</button>
+        </div>
+        <div class="metrics" id="metrics"></div>
+        <div class="overview-card hero-stats" id="overview-cards"></div>
+      </aside>
+
+      <section class="map-panel glass">
+        <div class="panel-header map-header">
+          <div>
+            <h2>Synthetic Warning Map</h2>
+            <p>Heatmap first, corridor second. Grid and terrain are auxiliary views.</p>
+          </div>
+          <div class="map-mode" id="map-mode-label">Heatmap</div>
+        </div>
+        <div class="map-wrap leaflet-wrap">
+          <div id="map"></div>
+        </div>
+      </section>
+
+      <aside class="right-panel glass">
+        <div class="panel-header">
+          <h2>Selection Detail</h2>
+          <p>Click a heat zone, grid cell, or corridor segment to inspect the active frame.</p>
+        </div>
+        <div id="cell-detail" class="detail-card"></div>
+        <div class="panel-header compact">
+          <h2>Village Aggregation</h2>
+          <p>Regional synthetic grouping for the active frame.</p>
+        </div>
+        <div id="village-list" class="village-list"></div>
+      </aside>
+    </section>
+  </main>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+  <script src="./data/simulated_risk_map.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
