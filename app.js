@@ -11,6 +11,7 @@
   const villageTitleEl = document.getElementById("village-title");
   const metricsEl = document.getElementById("metrics");
   const detailEl = document.getElementById("cell-detail");
+  const forecastEl = document.getElementById("forecast-panel");
   const villageEl = document.getElementById("village-list");
   const alertStripEl = document.getElementById("alert-strip");
   const overviewCardsEl = document.getElementById("overview-cards");
@@ -38,6 +39,7 @@
     frameIndex: 0,
     selectedCellId: null,
     selectedCorridorId: null,
+    selectedWatchpointName: null,
     showLines: true,
     showHotspots: false,
     showWatchpoints: false,
@@ -58,28 +60,46 @@
     return Object.fromEntries(scenario().cells.map((cell) => [cell.id, cell]));
   }
 
+  function frameCellMap(frameIndex) {
+    const frame = scenario().frames[(frameIndex + scenario().frames.length) % scenario().frames.length];
+    return Object.fromEntries(frame.cells.map((cell) => [cell.id, cell]));
+  }
+
   function resetSelection() {
     const cells = scenario().cells;
     state.selectedCellId = cells[0] ? cells[0].id : null;
     state.selectedCorridorId = null;
+    state.selectedWatchpointName = null;
+  }
+
+  function nearestBaseCell(lat, lon) {
+    return scenario().cells.reduce((best, cell) => {
+      if (!best) return cell;
+      const d1 = (cell.lat - lat) ** 2 + (cell.lon - lon) ** 2;
+      const d2 = (best.lat - lat) ** 2 + (best.lon - lon) ** 2;
+      return d1 < d2 ? cell : best;
+    }, null);
+  }
+
+  function getWatchpointContext(name) {
+    const point = scenario().watch_points.find((item) => item.name === name);
+    if (!point) return null;
+    const base = nearestBaseCell(point.lat, point.lon);
+    const current = frameCellMap(state.frameIndex)[base.id];
+    return { point, base, current };
   }
 
   resetSelection();
 
-  const initialScenario = scenario();
   const map = L.map("map", { zoomControl: true, preferCanvas: true });
   const onlineTileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 18,
     attribution: "&copy; OpenStreetMap",
   });
   onlineTileLayer.on("tileerror", () => {
-    if (map.hasLayer(onlineTileLayer)) {
-      map.removeLayer(onlineTileLayer);
-    }
+    if (map.hasLayer(onlineTileLayer)) map.removeLayer(onlineTileLayer);
   });
-  if (navigator.onLine) {
-    onlineTileLayer.addTo(map);
-  }
+  if (navigator.onLine) onlineTileLayer.addTo(map);
 
   const terrainBaseLayer = L.layerGroup().addTo(map);
   const boundaryLayer = L.layerGroup().addTo(map);
@@ -87,6 +107,7 @@
   const hotspotLayer = L.layerGroup().addTo(map);
   const corridorLayer = L.layerGroup().addTo(map);
   const watchLayer = L.layerGroup().addTo(map);
+  const fixedPointLayer = L.layerGroup().addTo(map);
   let heatLayer = null;
 
   const palette = {
@@ -123,6 +144,18 @@
     return { 1: "Low", 2: "Guarded", 3: "Elevated", 4: "High", 5: "Severe" }[level] || "Unknown";
   }
 
+  function levelFromRisk(score, windMs = 0, rainMm = 0) {
+    let level = 1;
+    if (score >= 0.2) level = 2;
+    if (score >= 0.5) level = 3;
+    if (score >= 0.75) level = 4;
+    if (score >= 0.9) level = 5;
+    if (windMs > 14) level = Math.min(level + 1, 5);
+    if (rainMm > 15) level = 1;
+    else if (rainMm > 5) level = Math.max(level - 1, 1);
+    return level;
+  }
+
   function hotspotLabel(current) {
     return current.hotspot ? "Hotspot candidate" : "Under watch";
   }
@@ -152,6 +185,17 @@
         ${hotspotLabel(current)} during ${currentFrame().timestamp}<br/>
         Main drivers: ${cellDrivers(base, current).join(", ")}<br/>
         Suggested action: ${cellAction(current)}
+      </div>
+    `;
+  }
+
+  function watchpointPopupHTML(point, base, current) {
+    return `
+      <div>
+        <strong>${point.name}</strong><br/>
+        Fixed monitoring point linked to ${base.village}<br/>
+        ${riskLabel(current.level)} warning, ${(current.final_risk * 100).toFixed(1)}% risk<br/>
+        Main drivers: ${cellDrivers(base, current).join(", ")}
       </div>
     `;
   }
@@ -192,9 +236,7 @@
 
   function fitScenarioBounds() {
     const bounds = scenarioBounds();
-    if (bounds.isValid()) {
-      map.fitBounds(bounds.pad(0.04), { animate: false });
-    }
+    if (bounds.isValid()) map.fitBounds(bounds.pad(0.04), { animate: false });
   }
 
   function renderScenarioSwitch() {
@@ -211,10 +253,10 @@
     boundaryLayer.addLayer(L.geoJSON(scenario().boundary, {
       style: {
         color: "#d7efe8",
-        weight: 2,
-        opacity: 0.9,
-        fillColor: "#3c5f60",
-        fillOpacity: state.view === "terrain" ? 0.08 : 0.03,
+        weight: 1.6,
+        opacity: 0.85,
+        fillColor: "#54737a",
+        fillOpacity: state.view === "terrain" ? 0.06 : 0.015,
       },
       interactive: false,
     }));
@@ -226,7 +268,7 @@
       terrainBaseLayer.addLayer(L.rectangle(cellBounds(base), {
         stroke: false,
         fillColor: palette.elevation(base),
-        fillOpacity: state.view === "terrain" ? 0.72 : 0.22,
+        fillOpacity: state.view === "terrain" ? 0.46 : 0.10,
         interactive: false,
       }));
     }
@@ -235,9 +277,7 @@
   function renderTimeHeader() {
     const frame = currentFrame();
     timeSlider.max = String(scenario().frames.length - 1);
-    if (!state.draggingTime) {
-      timeSlider.value = String(state.frameIndex);
-    }
+    if (!state.draggingTime) timeSlider.value = String(state.frameIndex);
     timeLabel.textContent = frame.timestamp;
     playBtn.textContent = state.playing ? "Pause" : "Play";
     playBtn.classList.toggle("active", state.playing);
@@ -293,17 +333,18 @@
       return [base.lat, base.lon, cell.final_risk];
     });
     heatLayer = L.heatLayer(points, {
-      radius: state.view === "heat" ? 22 : 16,
-      blur: state.view === "heat" ? 24 : 18,
+      radius: state.view === "heat" ? 28 : 20,
+      blur: state.view === "heat" ? 26 : 18,
       maxZoom: 12,
       max: 1.0,
       gradient: {
-        0.05: "#1f6f8b",
+        0.05: "#225b80",
         0.25: "#2bb3a3",
         0.5: "#f2c94c",
         0.75: "#f2994a",
         1.0: "#eb5757",
       },
+      minOpacity: 0.22,
     }).addTo(map);
   }
 
@@ -311,24 +352,25 @@
     cellLayer.clearLayers();
     hotspotLayer.clearLayers();
     if (state.view !== "cells" && state.view !== "terrain") return;
-    const baseMap = baseCellMap();
-    const dyn = Object.fromEntries(currentFrame().cells.map((cell) => [cell.id, cell]));
+    const dyn = frameCellMap(state.frameIndex);
     for (const base of scenario().cells) {
       const current = dyn[base.id];
       if (!current) continue;
-      const selected = state.selectedCellId === base.id && !state.selectedCorridorId;
+      const selected = state.selectedCellId === base.id && !state.selectedCorridorId && !state.selectedWatchpointName;
       const fillMode = state.view === "terrain" ? "elevation" : state.layer;
       const rect = L.rectangle(cellBounds(base), {
         stroke: selected,
-        weight: selected ? 2.0 : 0.18,
-        color: selected ? "#ffffff" : "rgba(255,255,255,0.08)",
+        weight: selected ? 1.8 : 0.12,
+        color: selected ? "#ffffff" : "rgba(255,255,255,0.06)",
         fillColor: palette[fillMode](base, current),
-        fillOpacity: selected ? 0.94 : 0.68,
+        fillOpacity: selected ? 0.75 : 0.42,
       });
       rect.on("click", () => {
         state.selectedCellId = base.id;
         state.selectedCorridorId = null;
+        state.selectedWatchpointName = null;
         renderDetail();
+        renderForecastPanel();
       });
       rect.bindPopup(cellPopupHTML(base, current));
       cellLayer.addLayer(rect);
@@ -338,9 +380,9 @@
           radius: 7000,
           color: current.color,
           weight: 1,
-          opacity: 0.25,
+          opacity: 0.18,
           fillColor: current.color,
-          fillOpacity: 0.10,
+          fillOpacity: 0.08,
         }));
       }
     }
@@ -357,16 +399,16 @@
       for (const segment of current.segment_styles) {
         const glow = L.polyline(segment.coords, {
           color: segment.color,
-          weight: segment.weight + 7,
-          opacity: state.view === "corridor" ? 0.30 : 0.18,
+          weight: segment.weight + 6,
+          opacity: state.view === "corridor" ? 0.24 : 0.14,
           className: selected ? "corridor-segment-selected" : "corridor-segment-glow",
           lineCap: "round",
           lineJoin: "round",
         });
         const line = L.polyline(segment.coords, {
           color: segment.color,
-          weight: selected ? segment.weight + 2.0 : segment.weight,
-          opacity: 0.95,
+          weight: selected ? segment.weight + 1.8 : segment.weight,
+          opacity: 0.86,
           className: selected ? "corridor-segment-selected corridor-segment-main" : "corridor-segment-main",
           lineCap: "round",
           lineJoin: "round",
@@ -374,7 +416,9 @@
         line.on("click", () => {
           state.selectedCorridorId = corridor.id;
           state.selectedCellId = null;
+          state.selectedWatchpointName = null;
           renderDetail();
+          renderForecastPanel();
         });
         line.bindPopup(corridorPopupHTML(corridor.id, segment, current));
         corridorLayer.addLayer(glow);
@@ -385,17 +429,124 @@
 
   function renderWatchPoints() {
     watchLayer.clearLayers();
-    if (!state.showWatchpoints) return;
+    fixedPointLayer.clearLayers();
     for (const point of scenario().watch_points) {
-      watchLayer.addLayer(L.circle([point.lat, point.lon], {
-        radius: point.coverage_km * 5000,
-        color: "#7dd8c2",
-        weight: 1,
-        opacity: 0.35,
-        fillColor: "#7dd8c2",
-        fillOpacity: 0.05,
-      }));
+      const ctx = getWatchpointContext(point.name);
+      if (!ctx) continue;
+      const selected = state.selectedWatchpointName === point.name;
+      const marker = L.circleMarker([point.lat, point.lon], {
+        radius: selected ? 8 : 6,
+        color: "#f7f3dc",
+        weight: 1.5,
+        fillColor: ctx.current.color,
+        fillOpacity: 0.95,
+      });
+      marker.on("click", () => {
+        state.selectedWatchpointName = point.name;
+        state.selectedCellId = ctx.base.id;
+        state.selectedCorridorId = null;
+        renderDetail();
+        renderForecastPanel();
+      });
+      marker.bindPopup(watchpointPopupHTML(point, ctx.base, ctx.current));
+      fixedPointLayer.addLayer(marker);
+
+      if (state.showWatchpoints) {
+        watchLayer.addLayer(L.circle([point.lat, point.lon], {
+          radius: point.coverage_km * 5000,
+          color: "#7dd8c2",
+          weight: 1,
+          opacity: 0.28,
+          fillColor: "#7dd8c2",
+          fillOpacity: 0.04,
+        }));
+      }
     }
+  }
+
+  function selectedForecastContext() {
+    if (state.selectedWatchpointName) return getWatchpointContext(state.selectedWatchpointName);
+    if (state.selectedCorridorId) return null;
+    const base = baseCellMap()[state.selectedCellId] || scenario().cells[0];
+    const current = frameCellMap(state.frameIndex)[base.id];
+    return { point: null, base, current };
+  }
+
+  function interpolateValue(a, b, frac, key) {
+    return a[key] + (b[key] - a[key]) * frac;
+  }
+
+  function addHours(label, hours) {
+    const [hh, mm] = label.split(":").map(Number);
+    const total = hh * 60 + mm + hours * 60;
+    const normalized = ((total % 1440) + 1440) % 1440;
+    const outH = String(Math.floor(normalized / 60)).padStart(2, "0");
+    const outM = String(normalized % 60).padStart(2, "0");
+    return `${outH}:${outM}`;
+  }
+
+  function buildHourlyForecast(baseId) {
+    const frames = scenario().frames;
+    const hourly = [];
+    for (let hour = 1; hour <= 8; hour += 1) {
+      const position = state.frameIndex + hour / 2;
+      const indexA = Math.floor(position) % frames.length;
+      const indexB = (indexA + 1) % frames.length;
+      const frac = position - Math.floor(position);
+      const a = Object.fromEntries(frames[indexA].cells.map((cell) => [cell.id, cell]))[baseId];
+      const b = Object.fromEntries(frames[indexB].cells.map((cell) => [cell.id, cell]))[baseId];
+      const risk = interpolateValue(a, b, frac, "final_risk");
+      const wind = interpolateValue(a, b, frac, "wind_ms");
+      const humidity = interpolateValue(a, b, frac, "humidity_pct");
+      const rain = interpolateValue(a, b, frac, "rain_mm");
+      const spread = interpolateValue(a, b, frac, "p_spread");
+      const dryness = interpolateValue(a, b, frac, "dfmc_selected");
+      const level = levelFromRisk(risk, wind, rain);
+      hourly.push({
+        offsetHour: hour,
+        label: addHours(currentFrame().timestamp, hour),
+        risk,
+        wind,
+        humidity,
+        rain,
+        spread,
+        dryness,
+        level,
+        color: [null, "#4BC27B", "#A7DB5A", "#F2C94C", "#F2994A", "#EB5757"][level],
+      });
+    }
+    return hourly;
+  }
+
+  function renderForecastPanel() {
+    const ctx = selectedForecastContext();
+    if (!ctx) {
+      forecastEl.innerHTML = `<div class="forecast-empty">Forecast preview is available for fixed monitoring points and selected sectors.</div>`;
+      return;
+    }
+    const title = ctx.point ? ctx.point.name : ctx.base.village;
+    const hourly = buildHourlyForecast(ctx.base.id);
+    forecastEl.innerHTML = `
+      <div class="forecast-card-header">
+        <strong>${title}</strong>
+        <span>${ctx.point ? "Fixed monitoring point" : "Selected sector"}</span>
+      </div>
+      <div class="forecast-grid">
+        ${hourly.map((item) => `
+          <div class="forecast-item">
+            <div class="forecast-top">
+              <strong>+${item.offsetHour}h</strong>
+              <span>${item.label}</span>
+            </div>
+            <div class="forecast-risk-row">
+              <span class="forecast-chip" style="background:${item.color};">${riskLabel(item.level)}</span>
+              <strong>${(item.risk * 100).toFixed(0)}%</strong>
+            </div>
+            <p>Wind ${item.wind.toFixed(1)} m/s ? Dryness ${item.dryness.toFixed(1)} ? Spread ${(item.spread * 100).toFixed(0)}%</p>
+          </div>
+        `).join("")}
+      </div>
+    `;
   }
 
   function renderDetail() {
@@ -423,10 +574,33 @@
       }
     }
 
-    const baseMap = baseCellMap();
-    const dyn = Object.fromEntries(frame.cells.map((cell) => [cell.id, cell]));
-    const base = baseMap[state.selectedCellId] || scenario().cells[0];
-    const current = dyn[base.id];
+    if (state.selectedWatchpointName) {
+      const ctx = getWatchpointContext(state.selectedWatchpointName);
+      if (ctx) {
+        detailEl.innerHTML = `
+          <div class="detail-title">
+            <div>
+              <strong>${ctx.point.name}</strong>
+              <div style="color: var(--muted); margin-top: 6px;">Fixed monitoring point linked to ${ctx.base.village} during ${frame.timestamp}</div>
+            </div>
+            <span class="pill" style="background:${ctx.current.color};">${riskLabel(ctx.current.level)}</span>
+          </div>
+          <div class="detail-grid">
+            <div class="detail-item"><span>Point Risk</span><strong>${(ctx.current.final_risk * 100).toFixed(1)}%</strong></div>
+            <div class="detail-item"><span>Linked Sector</span><strong>${ctx.base.village}</strong></div>
+            <div class="detail-item"><span>Weather Pressure</span><strong>${ctx.current.wind_ms} m/s wind / ${ctx.current.humidity_pct}% humidity</strong></div>
+            <div class="detail-item"><span>Fuel Condition</span><strong>${ctx.current.dfmc_selected} from ${ctx.current.dfmc_key}</strong></div>
+            <div class="detail-item"><span>Main Factors</span><strong>${cellDrivers(ctx.base, ctx.current).join(", ")}</strong></div>
+            <div class="detail-item"><span>Action</span><strong>${cellAction(ctx.current)}</strong></div>
+          </div>
+          <p style="margin:16px 0 0; color: var(--muted); line-height:1.5;">This fixed monitoring point is designed as a replaceable interface. Clients can later swap the simulated feed with a real point forecast or sensor stream.</p>
+        `;
+        return;
+      }
+    }
+
+    const base = baseCellMap()[state.selectedCellId] || scenario().cells[0];
+    const current = frameCellMap(state.frameIndex)[base.id];
     if (!base || !current) return;
     detailEl.innerHTML = `
       <div class="detail-title">
@@ -449,9 +623,7 @@
         <div class="stack-row"><span>Ignite</span><div class="stack-track"><div class="stack-fill" style="width:${(current.p_ignite * 100).toFixed(1)}%; background:#ffb84d;"></div></div><strong>${(current.p_ignite * 100).toFixed(0)}%</strong></div>
         <div class="stack-row"><span>Spread</span><div class="stack-track"><div class="stack-fill" style="width:${(current.p_spread * 100).toFixed(1)}%; background:#f26b5b;"></div></div><strong>${(current.p_spread * 100).toFixed(0)}%</strong></div>
       </div>
-      <p style="margin:16px 0 0; color: var(--muted); line-height:1.5;">
-        Main drivers for the current warning are ${cellDrivers(base, current).join(", ")}. Suggested action: ${cellAction(current)}
-      </p>
+      <p style="margin:16px 0 0; color: var(--muted); line-height:1.5;">Main drivers for the current warning are ${cellDrivers(base, current).join(", ")}. Suggested action: ${cellAction(current)}</p>
     `;
   }
 
@@ -481,6 +653,7 @@
     renderCorridors();
     renderWatchPoints();
     renderDetail();
+    renderForecastPanel();
     renderVillages();
   }
 
@@ -555,11 +728,13 @@
     toggles.lines.classList.toggle("active", state.showLines);
     renderCorridors();
   });
+
   toggles.hotspots.addEventListener("click", () => {
     state.showHotspots = !state.showHotspots;
     toggles.hotspots.classList.toggle("active", state.showHotspots);
     renderCells();
   });
+
   toggles.watchpoints.addEventListener("click", () => {
     state.showWatchpoints = !state.showWatchpoints;
     toggles.watchpoints.classList.toggle("active", state.showWatchpoints);

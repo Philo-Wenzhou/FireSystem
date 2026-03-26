@@ -96,10 +96,21 @@ input[type="range"] { padding: 0; }
 .map-wrap { margin-top: 18px; border-radius: 24px; overflow: hidden; background: linear-gradient(180deg, rgba(7, 20, 29, 0.45), rgba(7, 20, 29, 0.75)); border: 1px solid rgba(173, 220, 216, 0.12); }
 .leaflet-wrap { min-height: 660px; }
 #map { width: 100%; height: 660px; }
-.leaflet-container { background: linear-gradient(180deg, #c9d8d4 0%, #eef4f2 100%); font-family: var(--font-body); }
+.leaflet-container { background: linear-gradient(180deg, #8fc3da 0%, #b7d9e8 38%, #d7ebf3 60%, #e9f4f8 100%); font-family: var(--font-body); }
 .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: rgba(9, 23, 31, 0.94); color: var(--text); }
 .leaflet-popup-content { margin: 12px 14px; line-height: 1.45; }
 .detail-card { margin-top: 16px; padding: 16px; border-radius: 20px; background: rgba(6, 18, 24, 0.62); border: 1px solid rgba(173, 220, 216, 0.12); min-height: 320px; }
+.forecast-panel { margin-top: 14px; display: grid; gap: 10px; }
+.forecast-card-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border-radius: 16px; background: rgba(6, 18, 24, 0.62); border: 1px solid rgba(173, 220, 216, 0.1); }
+.forecast-card-header span { color: var(--muted); font-size: 0.82rem; }
+.forecast-grid { display: grid; gap: 10px; }
+.forecast-item { padding: 12px 14px; border-radius: 16px; background: rgba(6, 18, 24, 0.56); border: 1px solid rgba(173, 220, 216, 0.08); }
+.forecast-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.forecast-top span { color: var(--muted); font-size: 0.82rem; }
+.forecast-risk-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
+.forecast-item p { margin: 10px 0 0; color: var(--muted); font-size: 0.84rem; line-height: 1.4; }
+.forecast-chip { display: inline-flex; align-items: center; padding: 5px 10px; border-radius: 999px; color: #fff; font-size: 0.78rem; }
+.forecast-empty { padding: 14px; border-radius: 16px; background: rgba(6, 18, 24, 0.56); border: 1px solid rgba(173, 220, 216, 0.08); color: var(--muted); line-height: 1.5; }
 .detail-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
 .detail-item { padding: 10px 12px; border-radius: 14px; background: rgba(17, 37, 46, 0.72); }
