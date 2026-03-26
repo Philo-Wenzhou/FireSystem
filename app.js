@@ -96,9 +96,12 @@
     maxZoom: 18,
     attribution: "&copy; OpenStreetMap",
   });
+  let tileErrorCount = 0;
   onlineTileLayer.on("tileerror", () => {
-    if (map.hasLayer(onlineTileLayer)) map.removeLayer(onlineTileLayer);
+    tileErrorCount += 1;
+    if (tileErrorCount > 12 && map.hasLayer(onlineTileLayer)) map.removeLayer(onlineTileLayer);
   });
+  onlineTileLayer.on("load", () => { tileErrorCount = 0; });
   if (navigator.onLine) onlineTileLayer.addTo(map);
 
   const terrainBaseLayer = L.layerGroup().addTo(map);
@@ -191,11 +194,15 @@
 
   function watchpointPopupHTML(point, base, current) {
     return `
-      <div>
-        <strong>${point.name}</strong><br/>
-        Fixed monitoring point linked to ${base.village}<br/>
-        ${riskLabel(current.level)} warning, ${(current.final_risk * 100).toFixed(1)}% risk<br/>
-        Main drivers: ${cellDrivers(base, current).join(", ")}
+      <div class="station-popup-card">
+        <div class="station-popup-top">
+          <strong>${point.name}</strong>
+          <span class="station-popup-badge" style="background:${current.color};">${riskLabel(current.level)}</span>
+        </div>
+        <div class="station-popup-sub">Fixed monitoring point ? Linked sector ${base.village}</div>
+        <div class="station-popup-risk">${(current.final_risk * 100).toFixed(1)}% current risk</div>
+        <div class="station-popup-meta">Wind ${current.wind_ms.toFixed(1)} m/s ? Humidity ${current.humidity_pct.toFixed(0)}%</div>
+        <div class="station-popup-factors">Main drivers: ${cellDrivers(base, current).join(", ")}</div>
       </div>
     `;
   }
@@ -518,6 +525,27 @@
     return hourly;
   }
 
+  function buildForecastSparkline(hourly) {
+    const width = 320;
+    const height = 72;
+    const pad = 8;
+    const points = hourly.map((item, index) => {
+      const x = pad + (index * (width - pad * 2)) / Math.max(hourly.length - 1, 1);
+      const y = height - pad - item.risk * (height - pad * 2);
+      return [x, y];
+    });
+    const polyline = points.map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
+    const area = [`${pad},${height - pad}`, ...points.map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`), `${width - pad},${height - pad}`].join(" ");
+    const dots = points.map((p, index) => `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.2" fill="${hourly[index].color}" />`).join("");
+    return `
+      <svg class="forecast-sparkline" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+        <polyline points="${area}" fill="rgba(242, 153, 74, 0.16)" stroke="none"></polyline>
+        <polyline points="${polyline}" fill="none" stroke="#ffd48a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></polyline>
+        ${dots}
+      </svg>
+    `;
+  }
+
   function renderForecastPanel() {
     const ctx = selectedForecastContext();
     if (!ctx) {
@@ -531,6 +559,7 @@
         <strong>${title}</strong>
         <span>${ctx.point ? "Fixed monitoring point" : "Selected sector"}</span>
       </div>
+      ${buildForecastSparkline(hourly)}
       <div class="forecast-grid">
         ${hourly.map((item) => `
           <div class="forecast-item">
@@ -652,6 +681,8 @@
     renderCells();
     renderCorridors();
     renderWatchPoints();
+    corridorLayer.eachLayer((layer) => { if (layer.bringToFront) layer.bringToFront(); });
+    fixedPointLayer.eachLayer((layer) => { if (layer.bringToFront) layer.bringToFront(); });
     renderDetail();
     renderForecastPanel();
     renderVillages();
