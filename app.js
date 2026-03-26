@@ -65,12 +65,13 @@
     scenario().meta.base_lon + scenario().meta.lon_step * (scenario().meta.cols / 2),
   ], 10);
 
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  let heatLayer = null;
+  let onlineTileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 18,
     attribution: "&copy; OpenStreetMap",
-  }).addTo(map);
-
-  let heatLayer = null;
+  });
+  onlineTileLayer.addTo(map);
+  const terrainBaseLayer = L.layerGroup().addTo(map);
   const cellLayer = L.layerGroup().addTo(map);
   const hotspotLayer = L.layerGroup().addTo(map);
   const corridorLayer = L.layerGroup().addTo(map);
@@ -186,9 +187,30 @@
     });
   }
 
+
+  function renderTerrainBase() {
+    terrainBaseLayer.clearLayers();
+    for (const base of scenario().cells) {
+      terrainBaseLayer.addLayer(L.rectangle(cellBounds(base), {
+        stroke: false,
+        fillColor: palette.elevation(base),
+        fillOpacity: state.view === "terrain" ? 0.72 : 0.28,
+        interactive: false,
+      }));
+    }
+  }
+
+  function ensureBasemapFallback() {
+    if (onlineTileLayer && !navigator.onLine && map.hasLayer(onlineTileLayer)) {
+      map.removeLayer(onlineTileLayer);
+    }
+  }
+
   function renderAll() {
     syncMapCenter();
+    ensureBasemapFallback();
     renderScenarioSwitch();
+    renderTerrainBase();
     renderTimeHeader();
     renderAlertStrip();
     renderOverviewCards();
