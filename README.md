@@ -1,4 +1,6 @@
-# FireSystem
+﻿# FireSystem
+
+![FireSystem cover preview](./assets/readme-cover-preview.svg)
 
 A visual wildfire warning demo focused on public presentation.
 It combines a synthetic mountain landscape, curved warning corridors, animated time playback, and multiple map views in a single lightweight frontend experience.
@@ -11,6 +13,7 @@ The experience is designed to feel like an operational dashboard: users land on 
 ## Highlights
 
 - Clean landing page with direct entry into the warning system
+- README cover preview for quick GitHub homepage presentation
 - Default heatmap view for a smoother and more natural risk presentation
 - Curved corridor rendering with animated glow and width changes
 - Multiple visual modes including heatmap, corridor, terrain, and risk grid
@@ -18,15 +21,9 @@ The experience is designed to feel like an operational dashboard: users land on 
 - Descriptive warning popups and side-panel summaries
 - Fully synthetic content suitable for public sharing
 
+## Preview
 
-## Online Demo
-
-After GitHub Pages is enabled for this repository, the site can be published as a static demo.
-The expected Pages URL is:
-
-[https://philo-wenzhou.github.io/FireSystem/](https://philo-wenzhou.github.io/FireSystem/)
-
-If Pages has not been enabled yet, open the repository settings and set `Pages -> Build and deployment -> Source` to `GitHub Actions`.
+The repository homepage now includes a static cover preview so visitors can understand the visual style immediately without opening the local app first.
 
 ## Quick Start
 
@@ -69,6 +66,8 @@ FireSystem/
   app.js                    # Frontend interaction logic
   styles.css                # Visual design and layout
   generate_demo_data.py     # Synthetic dataset generator
+  assets/
+    readme-cover-preview.svg
   data/
     simulated_risk_map.json
     simulated_risk_map.js

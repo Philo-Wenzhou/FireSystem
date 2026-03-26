@@ -1,0 +1,87 @@
+﻿<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="140" y1="80" x2="1440" y2="820" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#09141F"/>
+      <stop offset="0.45" stop-color="#132536"/>
+      <stop offset="1" stop-color="#2A3E46"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1120 190) rotate(130) scale(380 250)">
+      <stop stop-color="#FF7A45" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#FF7A45" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(370 710) rotate(25) scale(520 300)">
+      <stop stop-color="#3BC9A7" stop-opacity="0.36"/>
+      <stop offset="1" stop-color="#3BC9A7" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="card" x1="360" y1="180" x2="1180" y2="760" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F9FBFC" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.07"/>
+    </linearGradient>
+    <linearGradient id="button" x1="0" y1="0" x2="240" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF8A3D"/>
+      <stop offset="1" stop-color="#FFB54B"/>
+    </linearGradient>
+    <filter id="blur" x="-200" y="-200" width="2000" height="1300" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="80"/>
+    </filter>
+    <filter id="shadow" x="260" y="120" width="1080" height="680" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="20" stdDeviation="30" flood-color="#000000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <g filter="url(#blur)">
+    <ellipse cx="1120" cy="190" rx="360" ry="220" fill="url(#glowA)"/>
+    <ellipse cx="370" cy="710" rx="480" ry="260" fill="url(#glowB)"/>
+  </g>
+
+  <path d="M0 740C152 670 257 658 399 685C548 714 620 773 748 780C912 789 988 703 1139 692C1312 680 1458 739 1600 806V900H0V740Z" fill="#10222B" fill-opacity="0.95"/>
+  <path d="M0 779C174 719 283 710 436 737C608 768 697 839 846 837C1000 835 1085 763 1227 753C1373 742 1478 777 1600 838V900H0V779Z" fill="#18333E" fill-opacity="0.9"/>
+
+  <g filter="url(#shadow)">
+    <rect x="320" y="160" width="960" height="560" rx="34" fill="url(#card)" stroke="rgba(255,255,255,0.28)"/>
+  </g>
+
+  <text x="400" y="242" fill="#A9C8D7" font-size="28" font-family="Segoe UI, Arial, sans-serif" letter-spacing="3">PUBLIC DEMO / SYNTHETIC TERRAIN</text>
+  <text x="400" y="340" fill="#FFFFFF" font-size="72" font-weight="700" font-family="Segoe UI, Arial, sans-serif">Mountain Fire</text>
+  <text x="400" y="424" fill="#FFFFFF" font-size="72" font-weight="700" font-family="Segoe UI, Arial, sans-serif">Corridor Warning</text>
+
+  <text x="400" y="500" fill="#D8E5EA" font-size="30" font-family="Segoe UI, Arial, sans-serif">A public-safe wildfire warning demonstration with synthetic terrain,</text>
+  <text x="400" y="542" fill="#D8E5EA" font-size="30" font-family="Segoe UI, Arial, sans-serif">synthetic corridors, animated risk playback, and multi-view exploration.</text>
+
+  <g>
+    <rect x="400" y="594" width="170" height="44" rx="22" fill="#16333D" stroke="#3C5A64"/>
+    <text x="485" y="622" text-anchor="middle" fill="#D9F4FF" font-size="22" font-family="Segoe UI, Arial, sans-serif">Heatmap View</text>
+    <rect x="586" y="594" width="180" height="44" rx="22" fill="#16333D" stroke="#3C5A64"/>
+    <text x="676" y="622" text-anchor="middle" fill="#D9F4FF" font-size="22" font-family="Segoe UI, Arial, sans-serif">Corridor View</text>
+    <rect x="782" y="594" width="160" height="44" rx="22" fill="#16333D" stroke="#3C5A64"/>
+    <text x="862" y="622" text-anchor="middle" fill="#D9F4FF" font-size="22" font-family="Segoe UI, Arial, sans-serif">Terrain View</text>
+    <rect x="958" y="594" width="200" height="44" rx="22" fill="#16333D" stroke="#3C5A64"/>
+    <text x="1058" y="622" text-anchor="middle" fill="#D9F4FF" font-size="22" font-family="Segoe UI, Arial, sans-serif">No Real Line Data</text>
+  </g>
+
+  <g>
+    <rect x="400" y="664" width="250" height="62" rx="31" fill="url(#button)"/>
+    <text x="525" y="704" text-anchor="middle" fill="#19212B" font-size="28" font-weight="700" font-family="Segoe UI, Arial, sans-serif">Enter System</text>
+  </g>
+
+  <g opacity="0.96">
+    <rect x="1060" y="245" width="132" height="132" rx="26" fill="#0F222B" stroke="#395461"/>
+    <rect x="1084" y="269" width="84" height="18" rx="9" fill="#5FD2B0" fill-opacity="0.9"/>
+    <rect x="1084" y="301" width="58" height="14" rx="7" fill="#86E2C9" fill-opacity="0.75"/>
+    <path d="M1086 350C1116 326 1147 322 1180 342" stroke="#FF9C4A" stroke-width="10" stroke-linecap="round"/>
+    <circle cx="1148" cy="340" r="8" fill="#FFD15C"/>
+
+    <rect x="1210" y="245" width="132" height="132" rx="26" fill="#0F222B" stroke="#395461"/>
+    <rect x="1234" y="269" width="84" height="18" rx="9" fill="#7CA7FF" fill-opacity="0.9"/>
+    <rect x="1234" y="301" width="58" height="14" rx="7" fill="#A6BFFF" fill-opacity="0.75"/>
+    <path d="M1234 354H1318" stroke="#FF6A4D" stroke-width="10" stroke-linecap="round"/>
+    <path d="M1244 336L1270 320L1296 332L1310 314" stroke="#FFD464" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <rect x="1060" y="394" width="282" height="176" rx="28" fill="#0F222B" stroke="#395461"/>
+    <text x="1090" y="438" fill="#D6E6EE" font-size="22" font-family="Segoe UI, Arial, sans-serif">Warning Snapshot</text>
+    <text x="1090" y="482" fill="#FFB055" font-size="40" font-weight="700" font-family="Segoe UI, Arial, sans-serif">High Activity</text>
+    <text x="1090" y="526" fill="#D1DEE5" font-size="22" font-family="Segoe UI, Arial, sans-serif">Synthetic corridor surge</text>
+    <text x="1090" y="556" fill="#D1DEE5" font-size="22" font-family="Segoe UI, Arial, sans-serif">Time playback enabled</text>
+  </g>
+</svg>
