@@ -1,14 +1,15 @@
-# Mountain Fire Warning Demo
+# FireSystem
 
-A standalone public-facing wildfire warning demo built from synthetic terrain, synthetic villages, synthetic lines and synthetic watch points.
+A standalone public-facing wildfire warning demo built from synthetic terrain, synthetic villages, synthetic curved corridors, synthetic watch zones, and time-based wildfire warning playback.
 
 ## What it shows
 
-- A real basemap rendered with Leaflet
-- Synthetic mountain risk cells with clickable detail
-- Pseudo infrastructure lines colored by simulated risk
-- Synthetic hotspot markers and watch-point coverage rings
-- A right-side inspection panel and village-level aggregation
+- A landing page that opens into the warning system
+- A Leaflet basemap with a default heatmap view
+- Curved synthetic corridor lines with width-gradient warning rendering
+- Terrain, corridor, heatmap, and risk-grid views
+- Clickable warning descriptions instead of raw code-style metrics
+- A right-side inspection panel and village aggregation
 
 ## Run locally
 
@@ -22,8 +23,8 @@ Then open:
 
 [http://localhost:8000](http://localhost:8000)
 
-Do not open `index.html` directly with `file://`, because browser module loading and map assets may not render correctly in that mode.
+You can also double-click `OPEN_DEMO.bat` to start the local server and open the system in your browser.
 
 ## Privacy note
 
-Everything in this demo is synthetic. No real line geometry, real tower data or real operational map objects are used.
+Everything in this demo is synthetic. No real line geometry, real tower data, or real operational map objects are used.
