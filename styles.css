@@ -163,3 +163,55 @@ input[type="range"] { padding: 0; }
 .system-dashboard {
   align-items: start;
 }
+
+
+.scenario-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.landing-dual-shell {
+  align-items: center;
+}
+
+.scenario-entry-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 28px;
+}
+
+.scenario-entry-card {
+  padding: 22px;
+  border-radius: 22px;
+  background: rgba(6, 18, 24, 0.62);
+  border: 1px solid rgba(173, 220, 216, 0.12);
+}
+
+.scenario-entry-card h3 {
+  margin: 8px 0 0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+}
+
+.scenario-entry-card p {
+  margin: 10px 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.scenario-entry-kicker {
+  margin: 0;
+  color: #ffd48a;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.76rem;
+}
+
+@media (max-width: 900px) {
+  .scenario-entry-grid,
+  .scenario-switch {
+    grid-template-columns: 1fr;
+  }
+}

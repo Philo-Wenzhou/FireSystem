@@ -9,21 +9,34 @@
 <body class="landing-body">
   <div class="ambient ambient-a"></div>
   <div class="ambient ambient-b"></div>
-  <main class="landing-shell">
+  <main class="landing-shell landing-dual-shell">
     <section class="landing-card glass">
       <p class="eyebrow">Public Demo / Synthetic Terrain</p>
       <h1>Mountain Fire Corridor Warning</h1>
       <p class="hero-copy">
-        A public-safe wildfire warning demonstration with synthetic terrain, synthetic corridors,
-        animated risk playback, and multi-view map exploration.
+        A public-safe wildfire warning demonstration with two synthetic regional storyboards.
+        Choose a broad Sichuan-style upland panel or a southeast Australia bushfire panel without exposing any real sensitive route data.
       </p>
       <div class="cover-tags">
+        <span class="cover-tag">Dual Region Demo</span>
         <span class="cover-tag">Heatmap View</span>
         <span class="cover-tag">Corridor View</span>
-        <span class="cover-tag">Terrain View</span>
-        <span class="cover-tag">No Real Line Data</span>
+        <span class="cover-tag">No Sensitive Place Mapping</span>
       </div>
-      <a class="enter-button" href="./system.html">Enter Warning System</a>
+      <div class="scenario-entry-grid">
+        <article class="scenario-entry-card">
+          <p class="scenario-entry-kicker">Panel A</p>
+          <h3>Sichuan Public Demo</h3>
+          <p>Broad upland storyboard with generic sector naming and synthetic terrain only.</p>
+          <a class="enter-button" href="./system.html?scenario=sichuan">Open Sichuan Panel</a>
+        </article>
+        <article class="scenario-entry-card">
+          <p class="scenario-entry-kicker">Panel B</p>
+          <h3>Australia Public Demo</h3>
+          <p>Southeast Australia style bushfire storyboard with fully synthetic corridors and labels.</p>
+          <a class="enter-button" href="./system.html?scenario=australia">Open Australia Panel</a>
+        </article>
+      </div>
     </section>
   </main>
 </body>

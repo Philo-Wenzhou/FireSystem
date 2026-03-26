@@ -1,5 +1,9 @@
 (function () {
-  const dataset = window.DATASET;
+  const rootDataset = window.DATASET;
+  const scenarioSwitchEl = document.getElementById("scenario-switch");
+  const scenarioSubtitleEl = document.getElementById("scenario-subtitle");
+  const mapTitleEl = document.getElementById("map-title");
+  const villageTitleEl = document.getElementById("village-title");
   const metricsEl = document.getElementById("metrics");
   const detailEl = document.getElementById("cell-detail");
   const villageEl = document.getElementById("village-list");
@@ -17,13 +21,17 @@
     watchpoints: document.getElementById("toggle-watchpoints"),
   };
 
-  const frameByIndex = dataset.frames;
-  const baseCellMap = Object.fromEntries(dataset.cells.map((cell) => [cell.id, cell]));
+  const scenarios = rootDataset.scenarios || [];
+  const scenarioMap = Object.fromEntries(scenarios.map((item) => [item.id, item]));
+  const queryScenario = new URLSearchParams(window.location.search).get("scenario");
+  const defaultScenarioId = scenarioMap[queryScenario] ? queryScenario : (scenarios[0] ? scenarios[0].id : null);
+
   const state = {
+    scenarioId: defaultScenarioId,
     layer: "risk",
     view: "heat",
     frameIndex: 0,
-    selectedCellId: dataset.cells[0] ? dataset.cells[0].id : null,
+    selectedCellId: null,
     selectedCorridorId: null,
     showLines: true,
     showHotspots: false,
@@ -32,9 +40,29 @@
     timer: null,
   };
 
+  function scenario() {
+    return scenarioMap[state.scenarioId];
+  }
+
+  function currentFrame() {
+    return scenario().frames[state.frameIndex];
+  }
+
+  function baseCellMap() {
+    return Object.fromEntries(scenario().cells.map((cell) => [cell.id, cell]));
+  }
+
+  function resetSelection() {
+    const cells = scenario().cells;
+    state.selectedCellId = cells[0] ? cells[0].id : null;
+    state.selectedCorridorId = null;
+  }
+
+  resetSelection();
+
   const map = L.map("map", { zoomControl: true }).setView([
-    dataset.meta.base_lat + dataset.meta.lat_step * (dataset.meta.rows / 2),
-    dataset.meta.base_lon + dataset.meta.lon_step * (dataset.meta.cols / 2),
+    scenario().meta.base_lat + scenario().meta.lat_step * (scenario().meta.rows / 2),
+    scenario().meta.base_lon + scenario().meta.lon_step * (scenario().meta.cols / 2),
   ], 10);
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -55,14 +83,6 @@
     wind: (_base, dynamic) => gradient(dynamic.wind_ms, 0, 18, ["#21435a", "#2d7fb6", "#7dd8c2", "#f6d365"]),
     dryness: (_base, dynamic) => gradient(dynamic.dfmc_selected, 0, 22, ["#2c5d46", "#7ba943", "#f3b13a", "#dd5c3d"]),
   };
-
-  function currentFrame() {
-    return frameByIndex[state.frameIndex];
-  }
-
-  function dynamicMap() {
-    return Object.fromEntries(currentFrame().cells.map((cell) => [cell.id, cell]));
-  }
 
   function gradient(value, min, max, colors) {
     const t = Math.max(0, Math.min(0.999, (value - min) / (max - min)));
@@ -142,12 +162,33 @@
   }
 
   function cellBounds(base) {
-    const halfLat = dataset.meta.lat_step / 2;
-    const halfLon = dataset.meta.lon_step / 2;
+    const halfLat = scenario().meta.lat_step / 2;
+    const halfLon = scenario().meta.lon_step / 2;
     return [[base.lat - halfLat, base.lon - halfLon], [base.lat + halfLat, base.lon + halfLon]];
   }
 
+  function syncMapCenter() {
+    map.setView([
+      scenario().meta.base_lat + scenario().meta.lat_step * (scenario().meta.rows / 2),
+      scenario().meta.base_lon + scenario().meta.lon_step * (scenario().meta.cols / 2),
+    ], state.scenarioId === "australia" ? 9 : 10);
+    mapTitleEl.textContent = scenario().name;
+    scenarioSubtitleEl.textContent = scenario().subtitle;
+    villageTitleEl.textContent = state.scenarioId === "australia" ? "District Aggregation" : "Regional Aggregation";
+  }
+
+  function renderScenarioSwitch() {
+    scenarioSwitchEl.innerHTML = scenarios.map((item) => `
+      <button class="chip ${item.id === state.scenarioId ? 'active' : ''}" data-scenario-id="${item.id}">${item.name}</button>
+    `).join("");
+    scenarioSwitchEl.querySelectorAll("button").forEach((button) => {
+      button.addEventListener("click", () => switchScenario(button.dataset.scenarioId));
+    });
+  }
+
   function renderAll() {
+    syncMapCenter();
+    renderScenarioSwitch();
     renderTimeHeader();
     renderAlertStrip();
     renderOverviewCards();
@@ -162,7 +203,7 @@
 
   function renderTimeHeader() {
     const frame = currentFrame();
-    timeSlider.max = String(frameByIndex.length - 1);
+    timeSlider.max = String(scenario().frames.length - 1);
     timeSlider.value = String(state.frameIndex);
     timeLabel.textContent = frame.timestamp;
     playBtn.textContent = state.playing ? "Pause" : "Play";
@@ -175,7 +216,7 @@
     const topVillage = frame.villages[0];
     const topCorridor = frame.corridors.slice().sort((a, b) => b.risk - a.risk)[0];
     alertStripEl.innerHTML = [
-      `<div class="alert-card"><strong>Time Slice</strong><span>${frame.timestamp} warning frame is active</span></div>`,
+      `<div class="alert-card"><strong>Scenario</strong><span>${scenario().name}</span></div>`,
       `<div class="alert-card"><strong>Top Corridor</strong><span>${topCorridor.id} at ${(topCorridor.risk * 100).toFixed(1)}% corridor risk</span></div>`,
       `<div class="alert-card"><strong>Top Region</strong><span>${topVillage.name} at ${(topVillage.score * 100).toFixed(1)}% regional score</span></div>`,
     ].join("");
@@ -215,7 +256,7 @@
     }
     if (state.view !== "heat" && state.view !== "corridor") return;
     const points = currentFrame().cells.map((cell) => {
-      const base = baseCellMap[cell.id];
+      const base = baseCellMap()[cell.id];
       return [base.lat, base.lon, cell.final_risk];
     });
     heatLayer = L.heatLayer(points, {
@@ -237,8 +278,9 @@
     cellLayer.clearLayers();
     hotspotLayer.clearLayers();
     if (state.view !== "cells" && state.view !== "terrain") return;
+    const baseMap = baseCellMap();
     const dyn = Object.fromEntries(currentFrame().cells.map((cell) => [cell.id, cell]));
-    for (const base of dataset.cells) {
+    for (const base of scenario().cells) {
       const current = dyn[base.id];
       const selected = state.selectedCellId === base.id && !state.selectedCorridorId;
       const fillMode = state.view === "terrain" ? "elevation" : state.layer;
@@ -274,7 +316,7 @@
     corridorLayer.clearLayers();
     if (!state.showLines) return;
     const corridorMap = Object.fromEntries(currentFrame().corridors.map((corridor) => [corridor.id, corridor]));
-    for (const corridor of dataset.corridors) {
+    for (const corridor of scenario().corridors) {
       const current = corridorMap[corridor.id];
       if (!current) continue;
       const selected = state.selectedCorridorId === corridor.id;
@@ -310,7 +352,7 @@
   function renderWatchPoints() {
     watchLayer.clearLayers();
     if (!state.showWatchpoints) return;
-    for (const point of dataset.watch_points) {
+    for (const point of scenario().watch_points) {
       watchLayer.addLayer(L.circle([point.lat, point.lon], {
         radius: point.coverage_km * 550,
         color: "#7dd8c2",
@@ -349,8 +391,9 @@
       }
     }
 
-    const dyn = Object.fromEntries(currentFrame().cells.map((cell) => [cell.id, cell]));
-    const base = baseCellMap[state.selectedCellId] || dataset.cells[0];
+    const baseMap = baseCellMap();
+    const dyn = Object.fromEntries(frame.cells.map((cell) => [cell.id, cell]));
+    const base = baseMap[state.selectedCellId] || scenario().cells[0];
     const current = dyn[base.id];
     detailEl.innerHTML = `
       <div class="detail-title">
@@ -392,7 +435,7 @@
   }
 
   function setFrame(index) {
-    state.frameIndex = (index + frameByIndex.length) % frameByIndex.length;
+    state.frameIndex = (index + scenario().frames.length) % scenario().frames.length;
     renderAll();
   }
 
@@ -415,6 +458,18 @@
   function togglePlayback() {
     if (state.playing) stopPlayback();
     else startPlayback();
+  }
+
+  function switchScenario(id) {
+    if (!scenarioMap[id] || id === state.scenarioId) return;
+    state.scenarioId = id;
+    state.frameIndex = 0;
+    resetSelection();
+    const params = new URLSearchParams(window.location.search);
+    params.set('scenario', id);
+    window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
+    renderAll();
+    if (state.playing) startPlayback();
   }
 
   viewSelect.addEventListener('change', (event) => {

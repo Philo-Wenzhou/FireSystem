@@ -20,7 +20,11 @@
       <aside class="left-panel glass">
         <div class="panel-header">
           <h2>Control Panel</h2>
-          <p>Default map mode is heatmap. Switch views only when you need deeper inspection.</p>
+          <p id="scenario-subtitle">Default map mode is heatmap. Switch views only when you need deeper inspection.</p>
+        </div>
+        <div class="control-group">
+          <label>Region Storyboard</label>
+          <div class="scenario-switch" id="scenario-switch"></div>
         </div>
         <div class="control-group time-group">
           <label for="time-slider">Time Playback</label>
@@ -61,7 +65,7 @@
       <section class="map-panel glass">
         <div class="panel-header map-header">
           <div>
-            <h2>Synthetic Warning Map</h2>
+            <h2 id="map-title">Synthetic Warning Map</h2>
             <p>Heatmap first, corridor second. Grid and terrain are auxiliary views.</p>
           </div>
           <div class="map-mode" id="map-mode-label">Heatmap</div>
@@ -78,8 +82,8 @@
         </div>
         <div id="cell-detail" class="detail-card"></div>
         <div class="panel-header compact">
-          <h2>Village Aggregation</h2>
-          <p>Regional synthetic grouping for the active frame.</p>
+          <h2 id="village-title">Regional Aggregation</h2>
+          <p>Broad synthetic grouping for the active frame.</p>
         </div>
         <div id="village-list" class="village-list"></div>
       </aside>
