@@ -6,21 +6,9 @@ import random
 from pathlib import Path
 
 SEED = 20260326
-COLS = 34
-ROWS = 22
-CELL_SIZE_KM = 0.8
-LAT_STEP = 0.0155
-LON_STEP = 0.0205
-TIME_LABELS = [
-    "06:00",
-    "08:00",
-    "10:00",
-    "12:00",
-    "14:00",
-    "16:00",
-    "18:00",
-    "20:00",
-]
+COLS = 42
+ROWS = 30
+TIME_LABELS = ["06:00", "08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00"]
 
 VEG_TYPES = [
     ("pine_forest", "Pine Forest", "#1f6b45", 0.24, 18.0, 0.05, 0.50, "100h"),
@@ -34,65 +22,62 @@ PALETTE = {1: "#4BC27B", 2: "#A7DB5A", 3: "#F2C94C", 4: "#F2994A", 5: "#EB5757"}
 SCENARIOS = [
     {
         "id": "sichuan",
-        "name": "Sichuan Public Demo",
-        "subtitle": "Synthetic mountain warning board for a broad Sichuan upland setting.",
-        "base_lat": 30.88,
-        "base_lon": 103.84,
-        "elevation_shift": 120.0,
-        "heat_bias": 0.1,
-        "humidity_bias": -2.0,
-        "rain_bias": 0.2,
-        "village_names": {
-            (0, 0): "West Upland",
-            (1, 0): "Cloud Cedar",
-            (2, 0): "Stone Basin",
-            (0, 1): "Red Slope",
-            (1, 1): "Watch Ridge",
-            (2, 1): "South Hollow",
-        },
-        "watch_points": [
-            {"name": "West Upland Tower", "col": 6, "row": 4, "coverage_km": 6.0},
-            {"name": "Cloud Cedar Station", "col": 16, "row": 10, "coverage_km": 5.2},
-            {"name": "South Hollow Hub", "col": 28, "row": 17, "coverage_km": 5.8},
-        ],
-        "corridors": [
-            ("Ridge Corridor Alpha", [(1, 3), (4, 4), (8, 6), (12, 7), (17, 8), (22, 10), (28, 11), (32, 13)]),
-            ("Valley Corridor Beta", [(2, 18), (6, 17), (10, 16), (14, 15), (19, 13), (24, 12), (31, 11)]),
-            ("East Spur Gamma", [(22, 3), (23, 5), (24, 8), (25, 11), (26, 14), (28, 17), (31, 20)]),
-            ("South Arc Delta", [(4, 20), (7, 19), (11, 18), (16, 17), (21, 17), (26, 18), (31, 19)]),
-        ],
+        "name": "Sichuan Province Public Demo",
+        "subtitle": "Synthetic warning surface constrained to the public outline of Sichuan Province.",
+        "country": "CHN",
+        "shape_name": "Sichuan Province",
+        "heat_bias": 0.3,
+        "humidity_bias": -1.5,
+        "rain_bias": 0.15,
+        "village_names": ["West Upland", "Cloud Cedar", "Stone Basin", "Red Slope", "Watch Ridge", "South Hollow"],
+        "watch_names": ["Western Watch Tower", "Central Patrol Station", "Southern Staging Hub"],
     },
     {
-        "id": "australia",
-        "name": "Australia Public Demo",
-        "subtitle": "Synthetic bushfire warning board for a broad southeast Australia setting.",
-        "base_lat": -36.12,
-        "base_lon": 148.26,
-        "elevation_shift": -80.0,
+        "id": "queensland",
+        "name": "Queensland Public Demo",
+        "subtitle": "Synthetic bushfire warning surface constrained to the public outline of Queensland.",
+        "country": "AUS",
+        "shape_name": "Queensland",
         "heat_bias": 1.8,
-        "humidity_bias": -5.5,
-        "rain_bias": -0.35,
-        "village_names": {
-            (0, 0): "Blue Gum Ridge",
-            (1, 0): "Ironbark Flat",
-            (2, 0): "Snowgrass Bend",
-            (0, 1): "Ash Creek",
-            (1, 1): "Stringybark Watch",
-            (2, 1): "South Range",
-        },
-        "watch_points": [
-            {"name": "Blue Gum Tower", "col": 5, "row": 5, "coverage_km": 6.3},
-            {"name": "Ash Creek Patrol", "col": 17, "row": 9, "coverage_km": 5.4},
-            {"name": "South Range Staging", "col": 29, "row": 16, "coverage_km": 6.0},
-        ],
-        "corridors": [
-            ("Foothill Corridor Alpha", [(1, 4), (5, 5), (9, 7), (13, 8), (18, 8), (24, 9), (30, 11), (33, 13)]),
-            ("Creekline Beta", [(2, 19), (7, 18), (11, 16), (15, 15), (20, 14), (26, 13), (32, 11)]),
-            ("East Ash Gamma", [(21, 2), (22, 4), (23, 7), (24, 10), (25, 13), (27, 16), (31, 20)]),
-            ("Southern Sweep Delta", [(3, 20), (7, 19), (12, 18), (17, 18), (22, 17), (27, 18), (32, 19)]),
-        ],
+        "humidity_bias": -5.0,
+        "rain_bias": -0.3,
+        "village_names": ["Blue Gum Ridge", "Ironbark Flat", "Dry Creek", "Sunline Range", "Coastal Watch", "South Interior"],
+        "watch_names": ["North Corridor Tower", "Inland Patrol Base", "Southern Operations Hub"],
+    },
+    {
+        "id": "newsouthwales",
+        "name": "New South Wales Public Demo",
+        "subtitle": "Synthetic bushfire warning surface constrained to the public outline of New South Wales.",
+        "country": "AUS",
+        "shape_name": "New South Wales",
+        "heat_bias": 1.2,
+        "humidity_bias": -3.8,
+        "rain_bias": -0.15,
+        "village_names": ["Ash Line", "Granite Creek", "Tableland North", "Red Gully", "Watch Coast", "South Basin"],
+        "watch_names": ["Northern Lookout", "Central Patrol Base", "South Range Hub"],
+    },
+    {
+        "id": "southaustralia",
+        "name": "South Australia Public Demo",
+        "subtitle": "Synthetic bushfire warning surface constrained to the public outline of South Australia.",
+        "country": "AUS",
+        "shape_name": "South Australia",
+        "heat_bias": 2.1,
+        "humidity_bias": -6.2,
+        "rain_bias": -0.45,
+        "village_names": ["Mallee Watch", "Saltbush Plain", "North Track", "Red Sand Rise", "Dryline Point", "Southern Sweep"],
+        "watch_names": ["North Belt Tower", "Interior Patrol Base", "South Sweep Hub"],
     },
 ]
+
+CORRIDOR_TEMPLATES = [
+    [(0.08, 0.18), (0.18, 0.20), (0.30, 0.24), (0.42, 0.30), (0.56, 0.34), (0.70, 0.40), (0.84, 0.46)],
+    [(0.12, 0.78), (0.24, 0.72), (0.38, 0.66), (0.52, 0.58), (0.66, 0.52), (0.80, 0.48), (0.90, 0.44)],
+    [(0.68, 0.12), (0.66, 0.24), (0.64, 0.38), (0.66, 0.52), (0.74, 0.68), (0.82, 0.82)],
+    [(0.10, 0.66), (0.24, 0.62), (0.40, 0.60), (0.56, 0.60), (0.72, 0.62), (0.88, 0.66)],
+]
+
+CORRIDOR_NAMES = ["Alpha Corridor", "Beta Corridor", "Gamma Spur", "Delta Sweep"]
 
 
 def clamp(value: float, low: float, high: float) -> float:
@@ -120,29 +105,6 @@ def fuel_moisture(emc: float, rain_mm: float, time_key: str) -> float:
     return clamp(base + wetting, 2.0, 32.0)
 
 
-def build_elevation(col: int, row: int, rng: random.Random, scenario: dict) -> float:
-    x = col / (COLS - 1)
-    y = row / (ROWS - 1)
-    ridge_1 = 980 * math.exp(-((x - 0.28) ** 2 / 0.012 + (y - 0.38) ** 2 / 0.08))
-    ridge_2 = 760 * math.exp(-((x - 0.72) ** 2 / 0.018 + (y - 0.60) ** 2 / 0.05))
-    ridge_3 = 420 * math.exp(-((x - 0.52) ** 2 / 0.05 + (y - 0.18) ** 2 / 0.03))
-    waves = 220 * math.sin(x * 6.4) + 140 * math.cos(y * 7.2) + 110 * math.sin((x + y) * 9.0)
-    noise = rng.uniform(-35, 35)
-    return max(520.0, 1650.0 + scenario["elevation_shift"] + ridge_1 + ridge_2 + ridge_3 + waves + noise)
-
-
-def choose_vegetation(elevation: float, slope_deg: float, dryness_bias: float):
-    if elevation > 2500 and slope_deg > 24:
-        return VEG_TYPES[2]
-    if dryness_bias > 0.6:
-        return VEG_TYPES[2]
-    if elevation > 2200:
-        return VEG_TYPES[0]
-    if slope_deg < 10:
-        return VEG_TYPES[3]
-    return VEG_TYPES[1]
-
-
 def risk_level(score: float, wind_ms: float, rain_mm: float) -> int:
     if score < 0.20:
         level = 1
@@ -163,84 +125,91 @@ def risk_level(score: float, wind_ms: float, rain_mm: float) -> int:
     return level
 
 
-def cell_latlon(col: int, row: int, scenario: dict) -> tuple[float, float]:
-    lat = scenario["base_lat"] + (ROWS - 1 - row) * LAT_STEP
-    lon = scenario["base_lon"] + col * LON_STEP
+def load_feature(country: str, shape_name: str) -> dict:
+    path_map = {
+        "CHN": Path(__file__).parent / "data" / "public" / "chn_adm1.geojson",
+        "AUS": Path(__file__).parent / "data" / "public" / "aus_adm1.geojson",
+    }
+    data = json.loads(path_map[country].read_text(encoding="utf-8"))
+    for feature in data["features"]:
+        if feature["properties"].get("shapeName") == shape_name:
+            return feature
+    raise ValueError(f"Boundary not found: {country} / {shape_name}")
+
+
+def polygon_rings(geometry: dict) -> list[list[tuple[float, float]]]:
+    if geometry["type"] == "Polygon":
+        return [[(lon, lat) for lon, lat in ring] for ring in geometry["coordinates"]]
+    if geometry["type"] == "MultiPolygon":
+        rings = []
+        for poly in geometry["coordinates"]:
+            rings.extend([[(lon, lat) for lon, lat in ring] for ring in poly])
+        return rings
+    raise ValueError(f"Unsupported geometry type: {geometry['type']}")
+
+
+def exterior_rings(geometry: dict) -> list[list[tuple[float, float]]]:
+    if geometry["type"] == "Polygon":
+        return [[(lon, lat) for lon, lat in geometry["coordinates"][0]]]
+    if geometry["type"] == "MultiPolygon":
+        return [[(lon, lat) for lon, lat in poly[0]] for poly in geometry["coordinates"]]
+    raise ValueError(f"Unsupported geometry type: {geometry['type']}")
+
+
+def point_in_ring(point: tuple[float, float], ring: list[tuple[float, float]]) -> bool:
+    x, y = point
+    inside = False
+    j = len(ring) - 1
+    for i in range(len(ring)):
+        xi, yi = ring[i]
+        xj, yj = ring[j]
+        intersects = ((yi > y) != (yj > y)) and (x < (xj - xi) * (y - yi) / ((yj - yi) or 1e-12) + xi)
+        if intersects:
+            inside = not inside
+        j = i
+    return inside
+
+
+def point_in_geometry(point: tuple[float, float], geometry: dict) -> bool:
+    if geometry["type"] == "Polygon":
+        rings = [[(lon, lat) for lon, lat in ring] for ring in geometry["coordinates"]]
+        if not point_in_ring(point, rings[0]):
+            return False
+        for hole in rings[1:]:
+            if point_in_ring(point, hole):
+                return False
+        return True
+    if geometry["type"] == "MultiPolygon":
+        for poly in geometry["coordinates"]:
+            rings = [[(lon, lat) for lon, lat in ring] for ring in poly]
+            if point_in_ring(point, rings[0]):
+                blocked = any(point_in_ring(point, hole) for hole in rings[1:])
+                if not blocked:
+                    return True
+        return False
+    return False
+
+
+def geometry_bounds(geometry: dict) -> tuple[float, float, float, float]:
+    coords = []
+    if geometry["type"] == "Polygon":
+        for ring in geometry["coordinates"]:
+            coords.extend(ring)
+    else:
+        for poly in geometry["coordinates"]:
+            for ring in poly:
+                coords.extend(ring)
+    lons = [p[0] for p in coords]
+    lats = [p[1] for p in coords]
+    return min(lons), min(lats), max(lons), max(lats)
+
+
+def geometry_centroid(geometry: dict) -> tuple[float, float]:
+    exteriors = exterior_rings(geometry)
+    pts = [pt for ring in exteriors for pt in ring]
+    lon = sum(p[0] for p in pts) / len(pts)
+    lat = sum(p[1] for p in pts) / len(pts)
     return lat, lon
-
-
-def village_name(col: int, row: int, scenario: dict) -> str:
-    x_band = min(col * 3 // COLS, 2)
-    y_band = min(row * 2 // ROWS, 1)
-    return scenario["village_names"][(x_band, y_band)]
-
-
-def build_base_cells(scenario: dict) -> tuple[list[dict], dict[str, dict], list[dict]]:
-    rng = random.Random(SEED + sum(ord(ch) for ch in scenario["id"]))
-    elevation = [[build_elevation(c, r, rng, scenario) for c in range(COLS)] for r in range(ROWS)]
-    cells = []
-    villages: dict[str, dict] = {}
-
-    for row in range(ROWS):
-        for col in range(COLS):
-            left = elevation[row][max(col - 1, 0)]
-            right = elevation[row][min(col + 1, COLS - 1)]
-            up = elevation[max(row - 1, 0)][col]
-            down = elevation[min(row + 1, ROWS - 1)][col]
-            dzdx = (right - left) / (2 * CELL_SIZE_KM * 1000)
-            dzdy = (down - up) / (2 * CELL_SIZE_KM * 1000)
-            slope_deg = math.degrees(math.atan(math.sqrt(dzdx * dzdx + dzdy * dzdy) * 7.5))
-            aspect_deg = (math.degrees(math.atan2(dzdy, -dzdx)) + 360.0) % 360.0
-            ridge_exposure = 0.5 + 0.5 * math.sin((col / COLS) * math.pi * 2.4)
-            valley_channel = 0.5 + 0.5 * math.cos((row / ROWS) * math.pi * 1.6)
-            wind_ms = clamp(4.2 + ridge_exposure * 4.2 + slope_deg / 18 + rng.uniform(-0.8, 0.8), 1.2, 14.0)
-            humidity = clamp(64 - ridge_exposure * 16 - slope_deg * 0.25 + valley_channel * 6 + scenario["humidity_bias"] + rng.uniform(-3.0, 3.0), 18, 88)
-            temp_c = clamp(23 - elevation[row][col] / 480 + ridge_exposure * 2.4 + scenario["heat_bias"] + rng.uniform(-1.0, 1.0), 8, 32)
-            rain_mm = clamp(max(0.0, 1.2 - ridge_exposure * 0.8 + valley_channel * 0.7 + scenario["rain_bias"] + rng.uniform(-0.4, 0.4)), 0.0, 4.8)
-            dryness_bias = clamp((100 - humidity) / 100 + wind_ms / 20, 0.0, 1.0)
-            veg_code, veg_label, veg_color, p0, mc_ref, kw, fuel_base, dfmc_key = choose_vegetation(elevation[row][col], slope_deg, dryness_bias)
-            clearance_distance = clamp(2.2 + (1 - dryness_bias) * 4.0 + valley_channel * 1.3 + rng.uniform(-0.7, 0.7), 0.7, 7.8)
-            patrol_access = clamp(8.7 - slope_deg / 8.5 - ridge_exposure * 2.2 + rng.uniform(-0.6, 0.6), 2.8, 9.4)
-            lat, lon = cell_latlon(col, row, scenario)
-            cell = {
-                "id": f"{scenario['id'].upper()}_C{row:02d}_{col:02d}",
-                "col": col,
-                "row": row,
-                "lat": round(lat, 6),
-                "lon": round(lon, 6),
-                "elevation_m": round(elevation[row][col], 1),
-                "slope_deg": round(slope_deg, 1),
-                "aspect_deg": round(aspect_deg, 1),
-                "base_wind_ms": round(wind_ms, 1),
-                "base_humidity_pct": round(humidity, 1),
-                "base_temp_c": round(temp_c, 1),
-                "base_rain_mm": round(rain_mm, 1),
-                "clearance_m": round(clearance_distance, 1),
-                "access_score": round(patrol_access, 1),
-                "ridge_exposure": round(ridge_exposure, 3),
-                "valley_channel": round(valley_channel, 3),
-                "vegetation": {
-                    "code": veg_code,
-                    "label": veg_label,
-                    "color": veg_color,
-                    "p0": p0,
-                    "mc_ref": mc_ref,
-                    "kw": kw,
-                    "fuel_base": fuel_base,
-                    "dfmc_key": dfmc_key,
-                },
-                "village": village_name(col, row, scenario),
-            }
-            cells.append(cell)
-            village = villages.setdefault(cell["village"], {"name": cell["village"], "cell_ids": [], "population": rng.randint(800, 3200)})
-            village["cell_ids"].append(cell["id"])
-
-    watch_points = []
-    for point in scenario["watch_points"]:
-        lat, lon = cell_latlon(point["col"], point["row"], scenario)
-        watch_points.append({**point, "lat": round(lat, 6), "lon": round(lon, 6)})
-
-    return cells, villages, watch_points
 
 
 def catmull_rom(points: list[tuple[float, float]], samples_per_seg: int = 12) -> list[list[float]]:
@@ -261,16 +230,153 @@ def catmull_rom(points: list[tuple[float, float]], samples_per_seg: int = 12) ->
     return result
 
 
-def build_corridors(scenario: dict) -> list[dict]:
+def choose_vegetation(elevation: float, slope_deg: float, dryness_bias: float):
+    if elevation > 2500 and slope_deg > 24:
+        return VEG_TYPES[2]
+    if dryness_bias > 0.6:
+        return VEG_TYPES[2]
+    if elevation > 2200:
+        return VEG_TYPES[0]
+    if slope_deg < 10:
+        return VEG_TYPES[3]
+    return VEG_TYPES[1]
+
+
+def nearest_cell(cells: list[dict], lon: float, lat: float) -> dict:
+    return min(cells, key=lambda cell: (cell["lon"] - lon) ** 2 + (cell["lat"] - lat) ** 2)
+
+
+def build_base_cells(scenario: dict, geometry: dict) -> tuple[list[dict], dict[str, dict]]:
+    rng = random.Random(SEED + sum(ord(ch) for ch in scenario["id"]))
+    min_lon, min_lat, max_lon, max_lat = geometry_bounds(geometry)
+    lon_step = (max_lon - min_lon) / COLS
+    lat_step = (max_lat - min_lat) / ROWS
+    cells = []
+    villages: dict[str, dict] = {}
+    elevation_grid = {}
+
+    for row in range(ROWS):
+        for col in range(COLS):
+            lon = min_lon + (col + 0.5) * lon_step
+            lat = max_lat - (row + 0.5) * lat_step
+            if not point_in_geometry((lon, lat), geometry):
+                continue
+            x = col / max(COLS - 1, 1)
+            y = row / max(ROWS - 1, 1)
+            ridge_1 = 980 * math.exp(-((x - 0.28) ** 2 / 0.012 + (y - 0.38) ** 2 / 0.08))
+            ridge_2 = 760 * math.exp(-((x - 0.72) ** 2 / 0.018 + (y - 0.60) ** 2 / 0.05))
+            ridge_3 = 420 * math.exp(-((x - 0.52) ** 2 / 0.05 + (y - 0.18) ** 2 / 0.03))
+            waves = 220 * math.sin(x * 6.4) + 140 * math.cos(y * 7.2) + 110 * math.sin((x + y) * 9.0)
+            noise = rng.uniform(-35, 35)
+            elevation_grid[(row, col)] = max(280.0, 1500.0 + ridge_1 + ridge_2 + ridge_3 + waves + noise + scenario["heat_bias"] * 55)
+
+    def elev_at(r: int, c: int) -> float:
+        if (r, c) in elevation_grid:
+            return elevation_grid[(r, c)]
+        nearest = min(elevation_grid.keys(), key=lambda rc: (rc[0] - r) ** 2 + (rc[1] - c) ** 2)
+        return elevation_grid[nearest]
+
+    for (row, col), elevation in elevation_grid.items():
+        left = elev_at(row, max(col - 1, 0))
+        right = elev_at(row, min(col + 1, COLS - 1))
+        up = elev_at(max(row - 1, 0), col)
+        down = elev_at(min(row + 1, ROWS - 1), col)
+        dzdx = (right - left) / (2 * 900)
+        dzdy = (down - up) / (2 * 900)
+        slope_deg = math.degrees(math.atan(math.sqrt(dzdx * dzdx + dzdy * dzdy) * 7.5))
+        aspect_deg = (math.degrees(math.atan2(dzdy, -dzdx)) + 360.0) % 360.0
+        ridge_exposure = 0.5 + 0.5 * math.sin((col / COLS) * math.pi * 2.4)
+        valley_channel = 0.5 + 0.5 * math.cos((row / ROWS) * math.pi * 1.6)
+        wind_ms = clamp(4.2 + ridge_exposure * 4.2 + slope_deg / 18 + rng.uniform(-0.8, 0.8), 1.2, 14.0)
+        humidity = clamp(64 - ridge_exposure * 16 - slope_deg * 0.25 + valley_channel * 6 + scenario["humidity_bias"] + rng.uniform(-3.0, 3.0), 18, 88)
+        temp_c = clamp(23 - elevation / 480 + ridge_exposure * 2.4 + scenario["heat_bias"] + rng.uniform(-1.0, 1.0), 8, 34)
+        rain_mm = clamp(max(0.0, 1.2 - ridge_exposure * 0.8 + valley_channel * 0.7 + scenario["rain_bias"] + rng.uniform(-0.4, 0.4)), 0.0, 4.8)
+        dryness_bias = clamp((100 - humidity) / 100 + wind_ms / 20, 0.0, 1.0)
+        veg_code, veg_label, veg_color, p0, mc_ref, kw, fuel_base, dfmc_key = choose_vegetation(elevation, slope_deg, dryness_bias)
+        clearance_distance = clamp(2.2 + (1 - dryness_bias) * 4.0 + valley_channel * 1.3 + rng.uniform(-0.7, 0.7), 0.7, 7.8)
+        patrol_access = clamp(8.7 - slope_deg / 8.5 - ridge_exposure * 2.2 + rng.uniform(-0.6, 0.6), 2.8, 9.4)
+        lon = min_lon + (col + 0.5) * lon_step
+        lat = max_lat - (row + 0.5) * lat_step
+        x_band = min(col * 3 // COLS, 2)
+        y_band = min(row * 2 // ROWS, 1)
+        village = scenario["village_names"][y_band * 3 + x_band]
+        cell = {
+            "id": f"{scenario['id'].upper()}_C{row:02d}_{col:02d}",
+            "col": col,
+            "row": row,
+            "lat": round(lat, 6),
+            "lon": round(lon, 6),
+            "elevation_m": round(elevation, 1),
+            "slope_deg": round(slope_deg, 1),
+            "aspect_deg": round(aspect_deg, 1),
+            "base_wind_ms": round(wind_ms, 1),
+            "base_humidity_pct": round(humidity, 1),
+            "base_temp_c": round(temp_c, 1),
+            "base_rain_mm": round(rain_mm, 1),
+            "clearance_m": round(clearance_distance, 1),
+            "access_score": round(patrol_access, 1),
+            "ridge_exposure": round(ridge_exposure, 3),
+            "valley_channel": round(valley_channel, 3),
+            "vegetation": {
+                "code": veg_code,
+                "label": veg_label,
+                "color": veg_color,
+                "p0": p0,
+                "mc_ref": mc_ref,
+                "kw": kw,
+                "fuel_base": fuel_base,
+                "dfmc_key": dfmc_key,
+            },
+            "village": village,
+        }
+        cells.append(cell)
+        villages.setdefault(village, {"name": village, "cell_ids": [], "population": rng.randint(1200, 4200)})["cell_ids"].append(cell["id"])
+
+    return cells, villages
+
+
+def build_watch_points(scenario: dict, cells: list[dict]) -> list[dict]:
+    min_lon = min(cell["lon"] for cell in cells)
+    max_lon = max(cell["lon"] for cell in cells)
+    min_lat = min(cell["lat"] for cell in cells)
+    max_lat = max(cell["lat"] for cell in cells)
+    templates = [(0.18, 0.24, 6.1), (0.50, 0.48, 5.4), (0.78, 0.74, 5.9)]
+    points = []
+    for idx, (fx, fy, cover) in enumerate(templates):
+        lon = min_lon + (max_lon - min_lon) * fx
+        lat = max_lat - (max_lat - min_lat) * fy
+        snap = nearest_cell(cells, lon, lat)
+        points.append({
+            "name": scenario["watch_names"][idx],
+            "lat": snap["lat"],
+            "lon": snap["lon"],
+            "coverage_km": cover,
+        })
+    return points
+
+
+def build_corridors(scenario: dict, cells: list[dict]) -> list[dict]:
+    min_lon = min(cell["lon"] for cell in cells)
+    max_lon = max(cell["lon"] for cell in cells)
+    min_lat = min(cell["lat"] for cell in cells)
+    max_lat = max(cell["lat"] for cell in cells)
     corridors = []
-    for corridor_id, nodes in scenario["corridors"]:
-        latlon_nodes = []
-        for col, row in nodes:
-            lat, lon = cell_latlon(col, row, scenario)
-            latlon_nodes.append((lat, lon))
-        smooth_latlon = catmull_rom(latlon_nodes, 10)
+    for idx, template in enumerate(CORRIDOR_TEMPLATES):
+        snapped = []
+        anchors = []
+        for fx, fy in template:
+            lon = min_lon + (max_lon - min_lon) * fx
+            lat = max_lat - (max_lat - min_lat) * fy
+            snap = nearest_cell(cells, lon, lat)
+            anchors.append([snap["col"], snap["row"]])
+            snapped.append((snap["lat"], snap["lon"]))
+        smooth_latlon = catmull_rom(snapped, 10)
         geometry = [[pt[1], pt[0]] for pt in smooth_latlon]
-        corridors.append({"id": corridor_id, "geometry": {"type": "LineString", "coordinates": geometry}, "anchors": nodes})
+        corridors.append({
+            "id": f"{scenario['shape_name']} {CORRIDOR_NAMES[idx]}",
+            "geometry": {"type": "LineString", "coordinates": geometry},
+            "anchors": anchors,
+        })
     return corridors
 
 
@@ -286,7 +392,6 @@ def dynamic_weather(base: dict, time_index: int, scenario: dict) -> tuple[float,
 
 
 def build_frames(cells: list[dict], villages: dict[str, dict], corridors: list[dict], scenario: dict) -> list[dict]:
-    cell_lookup = {(cell["row"], cell["col"]): cell for cell in cells}
     frames = []
     for idx, label in enumerate(TIME_LABELS):
         frame_cells = []
@@ -344,20 +449,13 @@ def build_frames(cells: list[dict], villages: dict[str, dict], corridors: list[d
         risk_map = {cell["id"]: cell["final_risk"] for cell in frame_cells}
         corridor_frames = []
         for corridor in corridors:
-            coords = corridor["geometry"]["coordinates"]
             segment_styles = []
             segment_risks = []
-            for i in range(len(coords) - 1):
-                lon_a, lat_a = coords[i]
-                lon_b, lat_b = coords[i + 1]
-                col_a = int(round((lon_a - scenario["base_lon"]) / LON_STEP))
-                row_a = int(round((scenario["base_lat"] + (ROWS - 1) * LAT_STEP - lat_a) / LAT_STEP))
-                col_b = int(round((lon_b - scenario["base_lon"]) / LON_STEP))
-                row_b = int(round((scenario["base_lat"] + (ROWS - 1) * LAT_STEP - lat_b) / LAT_STEP))
-                col = max(0, min(COLS - 1, int(round((col_a + col_b) / 2))))
-                row = max(0, min(ROWS - 1, int(round((row_a + row_b) / 2))))
-                cell = cell_lookup[(row, col)]
-                local_risk = risk_map[cell["id"]]
+            for i in range(len(corridor["geometry"]["coordinates"]) - 1):
+                lon_a, lat_a = corridor["geometry"]["coordinates"][i]
+                lon_b, lat_b = corridor["geometry"]["coordinates"][i + 1]
+                mid = nearest_cell(cells, (lon_a + lon_b) / 2, (lat_a + lat_b) / 2)
+                local_risk = risk_map[mid["id"]]
                 segment_risks.append(local_risk)
                 level = risk_level(local_risk, 10.0, 0.0)
                 segment_styles.append({
@@ -407,22 +505,32 @@ def build_frames(cells: list[dict], villages: dict[str, dict], corridors: list[d
 
 
 def build_scenario_dataset(scenario: dict) -> dict:
-    cells, villages, watch_points = build_base_cells(scenario)
-    corridors = build_corridors(scenario)
+    feature = load_feature(scenario["country"], scenario["shape_name"])
+    geometry = feature["geometry"]
+    cells, villages = build_base_cells(scenario, geometry)
+    watch_points = build_watch_points(scenario, cells)
+    corridors = build_corridors(scenario, cells)
     frames = build_frames(cells, villages, corridors, scenario)
+    center_lat, center_lon = geometry_centroid(geometry)
+    min_lon, min_lat, max_lon, max_lat = geometry_bounds(geometry)
+    lat_step = (max_lat - min_lat) / ROWS
+    lon_step = (max_lon - min_lon) / COLS
     return {
         "id": scenario["id"],
         "name": scenario["name"],
         "subtitle": scenario["subtitle"],
+        "shape_name": scenario["shape_name"],
+        "boundary": feature,
         "meta": {
             "rows": ROWS,
             "cols": COLS,
-            "cell_size_km": CELL_SIZE_KM,
-            "base_lat": scenario["base_lat"],
-            "base_lon": scenario["base_lon"],
-            "lat_step": LAT_STEP,
-            "lon_step": LON_STEP,
-            "note": "All terrain, place labels, corridors, weather and hazards are synthetic and generated in code.",
+            "cell_size_km": 0.8,
+            "base_lat": center_lat,
+            "base_lon": center_lon,
+            "lat_step": lat_step,
+            "lon_step": lon_step,
+            "bbox": [min_lon, min_lat, max_lon, max_lat],
+            "note": "All weather, risk, corridors, villages and warning values are synthetic. Administrative outlines come from public geoBoundaries data.",
         },
         "cells": cells,
         "watch_points": watch_points,
@@ -437,7 +545,7 @@ def build_dataset() -> dict:
             "name": "Mountain Fire Warning Demo",
             "seed": SEED,
             "scenarios": [scenario["id"] for scenario in SCENARIOS],
-            "note": "Public-safe synthetic wildfire warning demonstration with multiple regional storyboards.",
+            "note": "Public-safe synthetic wildfire warning demonstration constrained by public administrative boundaries.",
         },
         "scenarios": [build_scenario_dataset(scenario) for scenario in SCENARIOS],
     }

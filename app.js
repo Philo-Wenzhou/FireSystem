@@ -1,5 +1,10 @@
 (function () {
   const rootDataset = window.DATASET;
+  if (!rootDataset || !Array.isArray(rootDataset.scenarios) || !rootDataset.scenarios.length) {
+    console.error("Missing or invalid DATASET");
+    return;
+  }
+
   const scenarioSwitchEl = document.getElementById("scenario-switch");
   const scenarioSubtitleEl = document.getElementById("scenario-subtitle");
   const mapTitleEl = document.getElementById("map-title");
@@ -21,10 +26,10 @@
     watchpoints: document.getElementById("toggle-watchpoints"),
   };
 
-  const scenarios = rootDataset.scenarios || [];
+  const scenarios = rootDataset.scenarios;
   const scenarioMap = Object.fromEntries(scenarios.map((item) => [item.id, item]));
   const queryScenario = new URLSearchParams(window.location.search).get("scenario");
-  const defaultScenarioId = scenarioMap[queryScenario] ? queryScenario : (scenarios[0] ? scenarios[0].id : null);
+  const defaultScenarioId = scenarioMap[queryScenario] ? queryScenario : scenarios[0].id;
 
   const state = {
     scenarioId: defaultScenarioId,
@@ -37,6 +42,7 @@
     showHotspots: false,
     showWatchpoints: false,
     playing: true,
+    draggingTime: false,
     timer: null,
   };
 
@@ -60,26 +66,32 @@
 
   resetSelection();
 
-  const map = L.map("map", { zoomControl: true }).setView([
-    scenario().meta.base_lat + scenario().meta.lat_step * (scenario().meta.rows / 2),
-    scenario().meta.base_lon + scenario().meta.lon_step * (scenario().meta.cols / 2),
-  ], 10);
-
-  let heatLayer = null;
-  let onlineTileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  const initialScenario = scenario();
+  const map = L.map("map", { zoomControl: true, preferCanvas: true });
+  const onlineTileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 18,
     attribution: "&copy; OpenStreetMap",
   });
-  onlineTileLayer.addTo(map);
+  onlineTileLayer.on("tileerror", () => {
+    if (map.hasLayer(onlineTileLayer)) {
+      map.removeLayer(onlineTileLayer);
+    }
+  });
+  if (navigator.onLine) {
+    onlineTileLayer.addTo(map);
+  }
+
   const terrainBaseLayer = L.layerGroup().addTo(map);
+  const boundaryLayer = L.layerGroup().addTo(map);
   const cellLayer = L.layerGroup().addTo(map);
   const hotspotLayer = L.layerGroup().addTo(map);
   const corridorLayer = L.layerGroup().addTo(map);
   const watchLayer = L.layerGroup().addTo(map);
+  let heatLayer = null;
 
   const palette = {
     risk: (_base, dynamic) => dynamic.color,
-    elevation: (base) => gradient(base.elevation_m, 1200, 3300, ["#17324a", "#2f7d5b", "#d6b96d", "#f6ead2"]),
+    elevation: (base) => gradient(base.elevation_m, 200, 3600, ["#17324a", "#2f7d5b", "#d6b96d", "#f6ead2"]),
     slope: (base) => gradient(base.slope_deg, 0, 35, ["#17324a", "#1e8a70", "#f2c94c", "#eb5757"]),
     wind: (_base, dynamic) => gradient(dynamic.wind_ms, 0, 18, ["#21435a", "#2d7fb6", "#7dd8c2", "#f6d365"]),
     dryness: (_base, dynamic) => gradient(dynamic.dfmc_selected, 0, 22, ["#2c5d46", "#7ba943", "#f3b13a", "#dd5c3d"]),
@@ -103,8 +115,8 @@
     const bb = parseInt(b.slice(5, 7), 16);
     const r = Math.round(ar + (br - ar) * t);
     const g = Math.round(ag + (bg - ag) * t);
-    const b2 = Math.round(ab + (bb - ab) * t);
-    return `rgb(${r}, ${g}, ${b2})`;
+    const blue = Math.round(ab + (bb - ab) * t);
+    return `rgb(${r}, ${g}, ${blue})`;
   }
 
   function riskLabel(level) {
@@ -121,7 +133,7 @@
     if (current.dfmc_selected <= 9) drivers.push("very dry fuel");
     if (base.slope_deg >= 28) drivers.push("steep terrain");
     if (base.clearance_m <= 2.5) drivers.push("tight safety distance");
-    if (drivers.length === 0) drivers.push("moderate terrain and weather pressure");
+    if (!drivers.length) drivers.push("moderate terrain and weather pressure");
     return drivers;
   }
 
@@ -168,25 +180,45 @@
     return [[base.lat - halfLat, base.lon - halfLon], [base.lat + halfLat, base.lon + halfLon]];
   }
 
-  function syncMapCenter() {
-    map.setView([
-      scenario().meta.base_lat + scenario().meta.lat_step * (scenario().meta.rows / 2),
-      scenario().meta.base_lon + scenario().meta.lon_step * (scenario().meta.cols / 2),
-    ], state.scenarioId === "australia" ? 9 : 10);
+  function scenarioBounds() {
+    return L.geoJSON(scenario().boundary).getBounds();
+  }
+
+  function updateScenarioHeader() {
     mapTitleEl.textContent = scenario().name;
     scenarioSubtitleEl.textContent = scenario().subtitle;
-    villageTitleEl.textContent = state.scenarioId === "australia" ? "District Aggregation" : "Regional Aggregation";
+    villageTitleEl.textContent = state.scenarioId === "sichuan" ? "Province Aggregation" : "State Aggregation";
+  }
+
+  function fitScenarioBounds() {
+    const bounds = scenarioBounds();
+    if (bounds.isValid()) {
+      map.fitBounds(bounds.pad(0.04), { animate: false });
+    }
   }
 
   function renderScenarioSwitch() {
     scenarioSwitchEl.innerHTML = scenarios.map((item) => `
-      <button class="chip ${item.id === state.scenarioId ? 'active' : ''}" data-scenario-id="${item.id}">${item.name}</button>
+      <button class="chip ${item.id === state.scenarioId ? "active" : ""}" data-scenario-id="${item.id}">${item.name}</button>
     `).join("");
     scenarioSwitchEl.querySelectorAll("button").forEach((button) => {
       button.addEventListener("click", () => switchScenario(button.dataset.scenarioId));
     });
   }
 
+  function renderBoundary() {
+    boundaryLayer.clearLayers();
+    boundaryLayer.addLayer(L.geoJSON(scenario().boundary, {
+      style: {
+        color: "#d7efe8",
+        weight: 2,
+        opacity: 0.9,
+        fillColor: "#3c5f60",
+        fillOpacity: state.view === "terrain" ? 0.08 : 0.03,
+      },
+      interactive: false,
+    }));
+  }
 
   function renderTerrainBase() {
     terrainBaseLayer.clearLayers();
@@ -194,39 +226,18 @@
       terrainBaseLayer.addLayer(L.rectangle(cellBounds(base), {
         stroke: false,
         fillColor: palette.elevation(base),
-        fillOpacity: state.view === "terrain" ? 0.72 : 0.28,
+        fillOpacity: state.view === "terrain" ? 0.72 : 0.22,
         interactive: false,
       }));
     }
   }
 
-  function ensureBasemapFallback() {
-    if (onlineTileLayer && !navigator.onLine && map.hasLayer(onlineTileLayer)) {
-      map.removeLayer(onlineTileLayer);
-    }
-  }
-
-  function renderAll() {
-    syncMapCenter();
-    ensureBasemapFallback();
-    renderScenarioSwitch();
-    renderTerrainBase();
-    renderTimeHeader();
-    renderAlertStrip();
-    renderOverviewCards();
-    renderMetrics();
-    renderHeat();
-    renderCells();
-    renderCorridors();
-    renderWatchPoints();
-    renderDetail();
-    renderVillages();
-  }
-
   function renderTimeHeader() {
     const frame = currentFrame();
     timeSlider.max = String(scenario().frames.length - 1);
-    timeSlider.value = String(state.frameIndex);
+    if (!state.draggingTime) {
+      timeSlider.value = String(state.frameIndex);
+    }
     timeLabel.textContent = frame.timestamp;
     playBtn.textContent = state.playing ? "Pause" : "Play";
     playBtn.classList.toggle("active", state.playing);
@@ -238,7 +249,7 @@
     const topVillage = frame.villages[0];
     const topCorridor = frame.corridors.slice().sort((a, b) => b.risk - a.risk)[0];
     alertStripEl.innerHTML = [
-      `<div class="alert-card"><strong>Scenario</strong><span>${scenario().name}</span></div>`,
+      `<div class="alert-card"><strong>Scenario</strong><span>${scenario().shape_name}</span></div>`,
       `<div class="alert-card"><strong>Top Corridor</strong><span>${topCorridor.id} at ${(topCorridor.risk * 100).toFixed(1)}% corridor risk</span></div>`,
       `<div class="alert-card"><strong>Top Region</strong><span>${topVillage.name} at ${(topVillage.score * 100).toFixed(1)}% regional score</span></div>`,
     ].join("");
@@ -282,8 +293,8 @@
       return [base.lat, base.lon, cell.final_risk];
     });
     heatLayer = L.heatLayer(points, {
-      radius: state.view === "heat" ? 24 : 16,
-      blur: state.view === "heat" ? 26 : 18,
+      radius: state.view === "heat" ? 22 : 16,
+      blur: state.view === "heat" ? 24 : 18,
       maxZoom: 12,
       max: 1.0,
       gradient: {
@@ -304,14 +315,15 @@
     const dyn = Object.fromEntries(currentFrame().cells.map((cell) => [cell.id, cell]));
     for (const base of scenario().cells) {
       const current = dyn[base.id];
+      if (!current) continue;
       const selected = state.selectedCellId === base.id && !state.selectedCorridorId;
       const fillMode = state.view === "terrain" ? "elevation" : state.layer;
       const rect = L.rectangle(cellBounds(base), {
         stroke: selected,
-        weight: selected ? 2.2 : 0.35,
-        color: selected ? "#ffffff" : "rgba(255,255,255,0.12)",
+        weight: selected ? 2.0 : 0.18,
+        color: selected ? "#ffffff" : "rgba(255,255,255,0.08)",
         fillColor: palette[fillMode](base, current),
-        fillOpacity: selected ? 0.92 : 0.7,
+        fillOpacity: selected ? 0.94 : 0.68,
       });
       rect.on("click", () => {
         state.selectedCellId = base.id;
@@ -323,12 +335,12 @@
 
       if (state.showHotspots && current.hotspot) {
         hotspotLayer.addLayer(L.circle([base.lat, base.lon], {
-          radius: 380,
+          radius: 7000,
           color: current.color,
           weight: 1,
           opacity: 0.25,
           fillColor: current.color,
-          fillOpacity: 0.12,
+          fillOpacity: 0.10,
         }));
       }
     }
@@ -346,14 +358,14 @@
         const glow = L.polyline(segment.coords, {
           color: segment.color,
           weight: segment.weight + 7,
-          opacity: state.view === "corridor" ? 0.28 : 0.18,
+          opacity: state.view === "corridor" ? 0.30 : 0.18,
           className: selected ? "corridor-segment-selected" : "corridor-segment-glow",
           lineCap: "round",
           lineJoin: "round",
         });
         const line = L.polyline(segment.coords, {
           color: segment.color,
-          weight: selected ? segment.weight + 2.2 : segment.weight,
+          weight: selected ? segment.weight + 2.0 : segment.weight,
           opacity: 0.95,
           className: selected ? "corridor-segment-selected corridor-segment-main" : "corridor-segment-main",
           lineCap: "round",
@@ -376,12 +388,12 @@
     if (!state.showWatchpoints) return;
     for (const point of scenario().watch_points) {
       watchLayer.addLayer(L.circle([point.lat, point.lon], {
-        radius: point.coverage_km * 550,
+        radius: point.coverage_km * 5000,
         color: "#7dd8c2",
         weight: 1,
         opacity: 0.35,
         fillColor: "#7dd8c2",
-        fillOpacity: 0.06,
+        fillOpacity: 0.05,
       }));
     }
   }
@@ -402,12 +414,10 @@
           <div class="detail-grid">
             <div class="detail-item"><span>Corridor Risk</span><strong>${(corridor.risk * 100).toFixed(1)}%</strong></div>
             <div class="detail-item"><span>Segments</span><strong>${corridor.segment_styles.length}</strong></div>
-            <div class="detail-item"><span>Main Reading</span><strong>${corridor.level >= 4 ? 'Priority watch corridor' : 'Routine corridor watch'}</strong></div>
-            <div class="detail-item"><span>Display</span><strong>Curved line with width gradient</strong></div>
+            <div class="detail-item"><span>Main Reading</span><strong>${corridor.level >= 4 ? "Priority watch corridor" : "Routine corridor watch"}</strong></div>
+            <div class="detail-item"><span>Display</span><strong>Boundary-aware curved line</strong></div>
           </div>
-          <p style="margin:16px 0 0; color: var(--muted); line-height:1.5;">
-            ${corridorNarrative(corridor)}
-          </p>
+          <p style="margin:16px 0 0; color: var(--muted); line-height:1.5;">${corridorNarrative(corridor)}</p>
         `;
         return;
       }
@@ -417,11 +427,12 @@
     const dyn = Object.fromEntries(frame.cells.map((cell) => [cell.id, cell]));
     const base = baseMap[state.selectedCellId] || scenario().cells[0];
     const current = dyn[base.id];
+    if (!base || !current) return;
     detailEl.innerHTML = `
       <div class="detail-title">
         <div>
           <strong>${base.village}</strong>
-          <div style="color: var(--muted); margin-top: 6px;">${base.vegetation.label} slope zone during ${frame.timestamp}</div>
+          <div style="color: var(--muted); margin-top: 6px;">${base.vegetation.label} sector during ${frame.timestamp}</div>
         </div>
         <span class="pill" style="background:${current.color};">${riskLabel(current.level)}</span>
       </div>
@@ -439,7 +450,7 @@
         <div class="stack-row"><span>Spread</span><div class="stack-track"><div class="stack-fill" style="width:${(current.p_spread * 100).toFixed(1)}%; background:#f26b5b;"></div></div><strong>${(current.p_spread * 100).toFixed(0)}%</strong></div>
       </div>
       <p style="margin:16px 0 0; color: var(--muted); line-height:1.5;">
-        Main drivers for the current warning are ${cellDrivers(base, current).join(', ')}. Suggested action: ${cellAction(current)}
+        Main drivers for the current warning are ${cellDrivers(base, current).join(", ")}. Suggested action: ${cellAction(current)}
       </p>
     `;
   }
@@ -453,7 +464,24 @@
         </div>
         <span class="pill" style="background:${village.color};">${(village.score * 100).toFixed(0)}%</span>
       </div>
-    `).join('');
+    `).join("");
+  }
+
+  function renderAll() {
+    updateScenarioHeader();
+    renderScenarioSwitch();
+    renderBoundary();
+    renderTerrainBase();
+    renderTimeHeader();
+    renderAlertStrip();
+    renderOverviewCards();
+    renderMetrics();
+    renderHeat();
+    renderCells();
+    renderCorridors();
+    renderWatchPoints();
+    renderDetail();
+    renderVillages();
   }
 
   function setFrame(index) {
@@ -462,19 +490,19 @@
   }
 
   function startPlayback() {
-    stopPlayback();
+    stopPlayback(false);
     state.playing = true;
     state.timer = window.setInterval(() => setFrame(state.frameIndex + 1), 1500);
     renderTimeHeader();
   }
 
-  function stopPlayback() {
+  function stopPlayback(updateHeader = true) {
     if (state.timer) {
       window.clearInterval(state.timer);
       state.timer = null;
     }
     state.playing = false;
-    renderTimeHeader();
+    if (updateHeader) renderTimeHeader();
   }
 
   function togglePlayback() {
@@ -488,45 +516,57 @@
     state.frameIndex = 0;
     resetSelection();
     const params = new URLSearchParams(window.location.search);
-    params.set('scenario', id);
-    window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
+    params.set("scenario", id);
+    window.history.replaceState({}, "", `${window.location.pathname}?${params.toString()}`);
+    fitScenarioBounds();
     renderAll();
     if (state.playing) startPlayback();
   }
 
-  viewSelect.addEventListener('change', (event) => {
+  viewSelect.addEventListener("change", (event) => {
     state.view = event.target.value;
     renderAll();
   });
 
-  layerSelect.addEventListener('change', (event) => {
+  layerSelect.addEventListener("change", (event) => {
     state.layer = event.target.value;
     renderCells();
   });
 
-  timeSlider.addEventListener('input', (event) => {
+  timeSlider.addEventListener("pointerdown", () => {
+    state.draggingTime = true;
     stopPlayback();
+  });
+
+  timeSlider.addEventListener("input", (event) => {
+    state.frameIndex = Number(event.target.value);
+    renderAll();
+  });
+
+  timeSlider.addEventListener("change", (event) => {
+    state.draggingTime = false;
     setFrame(Number(event.target.value));
   });
 
-  playBtn.addEventListener('click', togglePlayback);
+  playBtn.addEventListener("click", togglePlayback);
 
-  toggles.lines.addEventListener('click', () => {
+  toggles.lines.addEventListener("click", () => {
     state.showLines = !state.showLines;
-    toggles.lines.classList.toggle('active', state.showLines);
+    toggles.lines.classList.toggle("active", state.showLines);
     renderCorridors();
   });
-  toggles.hotspots.addEventListener('click', () => {
+  toggles.hotspots.addEventListener("click", () => {
     state.showHotspots = !state.showHotspots;
-    toggles.hotspots.classList.toggle('active', state.showHotspots);
+    toggles.hotspots.classList.toggle("active", state.showHotspots);
     renderCells();
   });
-  toggles.watchpoints.addEventListener('click', () => {
+  toggles.watchpoints.addEventListener("click", () => {
     state.showWatchpoints = !state.showWatchpoints;
-    toggles.watchpoints.classList.toggle('active', state.showWatchpoints);
+    toggles.watchpoints.classList.toggle("active", state.showWatchpoints);
     renderWatchPoints();
   });
 
+  fitScenarioBounds();
   renderAll();
   startPlayback();
 })();
