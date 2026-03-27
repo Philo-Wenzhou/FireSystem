@@ -49,31 +49,35 @@
           <div class="map-mode" id="map-mode-label">Heatmap</div>
         </div>
         <div class="map-toolbar glass-inline">
-          <div class="toolbar-group time-inline-group">
-            <button id="play-btn" class="chip active">Pause</button>
-            <div id="time-label" class="map-mode">06:00</div>
-            <input id="time-slider" type="range" min="0" max="7" step="1" value="0">
+          <div class="map-toolbar-row map-toolbar-row-top">
+            <div class="toolbar-group time-inline-group">
+              <button id="play-btn" class="chip active">Pause</button>
+              <div id="time-label" class="map-mode">06:00</div>
+              <input id="time-slider" type="range" min="0" max="7" step="1" value="0">
+            </div>
           </div>
-          <div class="toolbar-group view-inline-group" id="view-switch">
-            <button class="chip active" data-view="heat">Heatmap</button>
-            <button class="chip" data-view="corridor">Corridor Focus</button>
-            <button class="chip" data-view="terrain">Terrain</button>
-            <button class="chip" data-view="cells">Risk Grid</button>
-          </div>
-          <div class="toolbar-group layer-inline-group">
-            <label for="layer-select">Grid Layer</label>
-            <select id="layer-select">
-              <option value="risk">Final Risk</option>
-              <option value="elevation">Elevation</option>
-              <option value="slope">Slope</option>
-              <option value="wind">Wind Speed</option>
-              <option value="dryness">Fuel Dryness</option>
-            </select>
-          </div>
-          <div class="toolbar-group toggle-group">
-            <button id="toggle-lines" class="chip active">Curved Corridors</button>
-            <button id="toggle-watchpoints" class="chip">Watch Zones</button>
-            <button id="toggle-hotspots" class="chip">Hotspot Halo</button>
+          <div class="map-toolbar-row map-toolbar-row-bottom">
+            <div class="toolbar-group view-inline-group" id="view-switch">
+              <button class="chip active" data-view="heat">Heatmap</button>
+              <button class="chip" data-view="corridor">Corridor Focus</button>
+              <button class="chip" data-view="terrain">Terrain</button>
+              <button class="chip" data-view="cells">Risk Grid</button>
+            </div>
+            <div class="toolbar-group layer-inline-group">
+              <label for="layer-select">Grid Layer</label>
+              <select id="layer-select">
+                <option value="risk">Final Risk</option>
+                <option value="elevation">Elevation</option>
+                <option value="slope">Slope</option>
+                <option value="wind">Wind Speed</option>
+                <option value="dryness">Fuel Dryness</option>
+              </select>
+            </div>
+            <div class="toolbar-group toggle-group">
+              <button id="toggle-lines" class="chip active">Curved Corridors</button>
+              <button id="toggle-watchpoints" class="chip">Watch Zones</button>
+              <button id="toggle-hotspots" class="chip">Hotspot Halo</button>
+            </div>
           </div>
         </div>
         <div class="map-wrap leaflet-wrap">
@@ -107,4 +111,7 @@
   <script src="./app.js?v=20260327b"></script>
 </body>
 </html>
+
+
+
 

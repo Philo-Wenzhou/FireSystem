@@ -47,6 +47,8 @@
     playing: true,
     draggingTime: false,
     timer: null,
+    popupAnchor: null,
+    popupVisible: false,
   };
 
   function scenario() {
@@ -459,8 +461,9 @@
           state.selectedCorridorId = corridor.id;
           const anchor = corridorAnchorCell(current);
           state.selectedCellId = anchor ? anchor.id : state.selectedCellId;
+          state.popupAnchor = map.latLngToContainerPoint(event.latlng);
+          state.popupVisible = true;
           renderAll();
-          updateMapPopup();
         });
         corridorLayer.addLayer(glow);
         corridorLayer.addLayer(line);
@@ -609,7 +612,7 @@
 
   function renderForecastPanel() {
     const ctx = getSelectedCellContext();
-    if (!ctx || !ctx.base || !ctx.current) {
+    if (!ctx || !ctx.base || !ctx.current || !state.popupVisible) {
       forecastEl.innerHTML = `<div class="forecast-empty">Forecast preview will appear after you click a sector inside the calculation range.</div>`;
       indicatorChartEl.innerHTML = "";
       return;
@@ -635,16 +638,31 @@
     `;
   }
 
+  function positionMapPopup(anchor) {
+    if (!anchor) return;
+    const wrap = document.querySelector(".map-wrap");
+    if (!wrap) return;
+    const rect = wrap.getBoundingClientRect();
+    const cardWidth = Math.min(340, Math.max(260, rect.width - 36));
+    const x = Math.min(Math.max(anchor.x + 18, 18), Math.max(18, rect.width - cardWidth - 18));
+    const y = Math.min(Math.max(anchor.y - 16, 18), Math.max(18, rect.height - 240));
+    mapPopupCard.style.left = `${x}px`;
+    mapPopupCard.style.top = `${y}px`;
+    mapPopupCard.style.right = "auto";
+  }
+
   function updateMapPopup() {
     const ctx = getSelectedCellContext();
-    if (!ctx || !ctx.base || !ctx.current) {
+    if (!ctx || !ctx.base || !ctx.current || !state.popupVisible) {
       mapPopupCard.classList.add("hidden");
       mapPopupCard.innerHTML = "";
       return;
     }
     const distribution = level2Distribution(ctx.base);
     const hourly = buildHourlyForecast(ctx.base.id);
-    const corridorNote = state.selectedCorridorId ? `<div class="map-popup-sub">Linked corridor: ${state.selectedCorridorId}</div>` : `<div class="map-popup-sub">Nearest sector picked from the synthetic calculation range.</div>`;
+    const corridorNote = state.selectedCorridorId ? `<div class="map-popup-sub">${currentFrame().timestamp} / Linked corridor: ${state.selectedCorridorId}</div>` : `<div class="map-popup-sub">${currentFrame().timestamp} / Nearest sector picked from the synthetic calculation range.</div>`;
+    const conciseDrivers = cellDrivers(ctx.base, ctx.current).slice(0, 2).join(", ");
+    positionMapPopup(state.popupAnchor);
     mapPopupCard.innerHTML = `
       <div class="map-popup-title">
         <strong>${ctx.base.village}</strong>
@@ -652,12 +670,10 @@
       </div>
       ${corridorNote}
       <div class="map-popup-grid">
-        <div class="map-popup-item"><span>Current Risk</span><strong>${(ctx.current.final_risk * 100).toFixed(1)}%</strong></div>
-        <div class="map-popup-item"><span>Level-2 Footprint</span><strong>${distribution.level2Count}/${distribution.nearbyCount} nearby cells</strong></div>
-        <div class="map-popup-item"><span>Main Drivers</span><strong>${cellDrivers(ctx.base, ctx.current).join(", ")}</strong></div>
-        <div class="map-popup-item"><span>Next 8 Hours</span><strong>${trendDescription(hourly)}</strong></div>
+        <div class="map-popup-item"><span>Risk</span><strong>${(ctx.current.final_risk * 100).toFixed(1)}%</strong></div>
+        <div class="map-popup-item"><span>Level-2</span><strong>${distribution.level2Count}/${distribution.nearbyCount}</strong></div>
       </div>
-      <div class="map-popup-note">Wind ${ctx.current.wind_ms.toFixed(1)} m/s, humidity ${ctx.current.humidity_pct.toFixed(0)}%, fuel dryness ${ctx.current.dfmc_selected.toFixed(1)}. Suggested action: ${cellAction(ctx.current)}</div>
+      <div class="map-popup-note">Drivers: ${conciseDrivers}. 8h: ${trendDescription(hourly)}</div>
     `;
     mapPopupCard.classList.remove("hidden");
   }
@@ -758,6 +774,8 @@
     state.scenarioId = id;
     state.frameIndex = 0;
     resetSelection();
+    state.popupVisible = false;
+    state.popupAnchor = null;
     const params = new URLSearchParams(window.location.search);
     params.set("scenario", id);
     window.history.replaceState({}, "", `${window.location.pathname}?${params.toString()}`);
@@ -768,11 +786,17 @@
 
   map.on("click", (event) => {
     const { lat, lng } = event.latlng;
-    if (!pointInBoundary(lat, lng)) return;
+    if (!pointInBoundary(lat, lng)) {
+      state.popupVisible = false;
+      updateMapPopup();
+      return;
+    }
     const nearest = nearestBaseCell(lat, lng);
     if (!nearest) return;
     state.selectedCellId = nearest.id;
     state.selectedCorridorId = null;
+    state.popupAnchor = map.latLngToContainerPoint(event.latlng);
+    state.popupVisible = true;
     renderAll();
   });
 
@@ -830,4 +854,11 @@
   renderAll();
   startPlayback();
 })();
+
+
+
+
+
+
+
 
