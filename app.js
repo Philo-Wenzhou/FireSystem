@@ -92,6 +92,24 @@
   resetSelection();
 
   const map = L.map("map", { zoomControl: true, preferCanvas: true });
+  map.createPane("terrainPane");
+  map.createPane("boundaryPane");
+  map.createPane("heatPane");
+  map.createPane("cellPane");
+  map.createPane("corridorPane");
+  map.createPane("watchPane");
+  map.createPane("fixedPointPane");
+  map.getPane("terrainPane").style.zIndex = 320;
+  map.getPane("boundaryPane").style.zIndex = 330;
+  map.getPane("heatPane").style.zIndex = 340;
+  map.getPane("cellPane").style.zIndex = 350;
+  map.getPane("corridorPane").style.zIndex = 470;
+  map.getPane("watchPane").style.zIndex = 480;
+  map.getPane("fixedPointPane").style.zIndex = 490;
+  map.getPane("terrainPane").style.pointerEvents = "none";
+  map.getPane("boundaryPane").style.pointerEvents = "none";
+  map.getPane("heatPane").style.pointerEvents = "none";
+
   const onlineTileLayer = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 18,
     attribution: "&copy; OpenStreetMap",
@@ -258,6 +276,7 @@
   function renderBoundary() {
     boundaryLayer.clearLayers();
     boundaryLayer.addLayer(L.geoJSON(scenario().boundary, {
+      pane: "boundaryPane",
       style: {
         color: "#d7efe8",
         weight: 1.6,
@@ -273,6 +292,7 @@
     terrainBaseLayer.clearLayers();
     for (const base of scenario().cells) {
       terrainBaseLayer.addLayer(L.rectangle(cellBounds(base), {
+        pane: "terrainPane",
         stroke: false,
         fillColor: palette.elevation(base),
         fillOpacity: state.view === "terrain" ? 0.46 : 0.10,
@@ -340,6 +360,7 @@
       return [base.lat, base.lon, cell.final_risk];
     });
     heatLayer = L.heatLayer(points, {
+      pane: "heatPane",
       radius: state.view === "heat" ? 28 : 20,
       blur: state.view === "heat" ? 26 : 18,
       maxZoom: 12,
@@ -366,24 +387,28 @@
       const selected = state.selectedCellId === base.id && !state.selectedCorridorId && !state.selectedWatchpointName;
       const fillMode = state.view === "terrain" ? "elevation" : state.layer;
       const rect = L.rectangle(cellBounds(base), {
+        pane: "cellPane",
         stroke: selected,
         weight: selected ? 1.8 : 0.12,
         color: selected ? "#ffffff" : "rgba(255,255,255,0.06)",
         fillColor: palette[fillMode](base, current),
         fillOpacity: selected ? 0.75 : 0.42,
       });
-      rect.on("click", () => {
+      rect.on("click", (event) => {
+        if (event.originalEvent) event.originalEvent.stopPropagation();
         state.selectedCellId = base.id;
         state.selectedCorridorId = null;
         state.selectedWatchpointName = null;
         renderDetail();
         renderForecastPanel();
+        rect.openPopup();
       });
       rect.bindPopup(cellPopupHTML(base, current));
       cellLayer.addLayer(rect);
 
       if (state.showHotspots && current.hotspot) {
         hotspotLayer.addLayer(L.circle([base.lat, base.lon], {
+          pane: "cellPane",
           radius: 7000,
           color: current.color,
           weight: 1,
@@ -405,6 +430,7 @@
       const selected = state.selectedCorridorId === corridor.id;
       for (const segment of current.segment_styles) {
         const glow = L.polyline(segment.coords, {
+          pane: "corridorPane",
           color: segment.color,
           weight: segment.weight + 6,
           opacity: state.view === "corridor" ? 0.24 : 0.14,
@@ -413,6 +439,7 @@
           lineJoin: "round",
         });
         const line = L.polyline(segment.coords, {
+          pane: "corridorPane",
           color: segment.color,
           weight: selected ? segment.weight + 1.8 : segment.weight,
           opacity: 0.86,
@@ -420,12 +447,14 @@
           lineCap: "round",
           lineJoin: "round",
         });
-        line.on("click", () => {
+        line.on("click", (event) => {
+          if (event.originalEvent) event.originalEvent.stopPropagation();
           state.selectedCorridorId = corridor.id;
           state.selectedCellId = null;
           state.selectedWatchpointName = null;
           renderDetail();
           renderForecastPanel();
+          line.openPopup();
         });
         line.bindPopup(corridorPopupHTML(corridor.id, segment, current));
         corridorLayer.addLayer(glow);
@@ -442,24 +471,28 @@
       if (!ctx) continue;
       const selected = state.selectedWatchpointName === point.name;
       const marker = L.circleMarker([point.lat, point.lon], {
+        pane: "fixedPointPane",
         radius: selected ? 8 : 6,
         color: "#f7f3dc",
         weight: 1.5,
         fillColor: ctx.current.color,
         fillOpacity: 0.95,
       });
-      marker.on("click", () => {
+      marker.on("click", (event) => {
+        if (event.originalEvent) event.originalEvent.stopPropagation();
         state.selectedWatchpointName = point.name;
         state.selectedCellId = ctx.base.id;
         state.selectedCorridorId = null;
         renderDetail();
         renderForecastPanel();
+        marker.openPopup();
       });
       marker.bindPopup(watchpointPopupHTML(point, ctx.base, ctx.current));
       fixedPointLayer.addLayer(marker);
 
       if (state.showWatchpoints) {
         watchLayer.addLayer(L.circle([point.lat, point.lon], {
+          pane: "watchPane",
           radius: point.coverage_km * 5000,
           color: "#7dd8c2",
           weight: 1,
