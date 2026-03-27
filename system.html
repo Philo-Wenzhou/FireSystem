@@ -19,71 +19,78 @@
     <section class="dashboard system-dashboard">
       <aside class="left-panel glass">
         <div class="panel-header">
-          <h2>Control Panel</h2>
-          <p id="scenario-subtitle">Default map mode is heatmap. Switch views only when you need deeper inspection.</p>
+          <h2>Analysis Panel</h2>
+          <p id="scenario-subtitle">Select a scenario, then click anywhere inside the calculation range to inspect current risk and the next 8 hours.</p>
         </div>
         <div class="control-group">
           <label>Region Storyboard</label>
           <div class="scenario-switch" id="scenario-switch"></div>
         </div>
-        <div class="control-group time-group">
-          <label for="time-slider">Time Playback</label>
-          <div class="time-controls">
-            <button id="play-btn" class="chip active">Pause</button>
-            <div id="time-label" class="map-mode">06:00</div>
-          </div>
-          <input id="time-slider" type="range" min="0" max="7" step="1" value="0">
-        </div>
-        <div class="control-group">
-          <label for="view-select">Map View</label>
-          <select id="view-select">
-            <option value="heat">Heatmap</option>
-            <option value="corridor">Corridor Focus</option>
-            <option value="terrain">Terrain</option>
-            <option value="cells">Risk Grid</option>
-          </select>
-        </div>
-        <div class="control-group">
-          <label for="layer-select">Grid Layer</label>
-          <select id="layer-select">
-            <option value="risk">Final Risk</option>
-            <option value="elevation">Elevation</option>
-            <option value="slope">Slope</option>
-            <option value="wind">Wind Speed</option>
-            <option value="dryness">Fuel Dryness</option>
-          </select>
-        </div>
-        <div class="control-group toggle-group">
-          <button id="toggle-lines" class="chip active">Curved Corridors</button>
-          <button id="toggle-watchpoints" class="chip">Watch Zones</button>
-          <button id="toggle-hotspots" class="chip">Hotspot Halo</button>
-        </div>
         <div class="metrics" id="metrics"></div>
         <div class="overview-card hero-stats" id="overview-cards"></div>
+        <div class="panel-header compact">
+          <h2>Trend Chart</h2>
+          <p>Humidity, fuel dryness, and wind speed are shown together for the selected location.</p>
+        </div>
+        <div id="indicator-chart" class="indicator-chart"></div>
+        <div class="chart-legend">
+          <span><i class="legend-line humidity-line"></i>Humidity</span>
+          <span><i class="legend-line dryness-line"></i>Fuel Dryness</span>
+          <span><i class="legend-line wind-line"></i>Wind Speed</span>
+        </div>
       </aside>
 
       <section class="map-panel glass">
         <div class="panel-header map-header">
           <div>
             <h2 id="map-title">Synthetic Warning Map</h2>
-            <p>Heatmap first, corridor second. Grid and terrain are auxiliary views.</p>
+            <p>Heatmap is preserved. Click anywhere inside the calculation area to inspect the nearest risk cell.</p>
           </div>
           <div class="map-mode" id="map-mode-label">Heatmap</div>
         </div>
+        <div class="map-toolbar glass-inline">
+          <div class="toolbar-group time-inline-group">
+            <button id="play-btn" class="chip active">Pause</button>
+            <div id="time-label" class="map-mode">06:00</div>
+            <input id="time-slider" type="range" min="0" max="7" step="1" value="0">
+          </div>
+          <div class="toolbar-group view-inline-group" id="view-switch">
+            <button class="chip active" data-view="heat">Heatmap</button>
+            <button class="chip" data-view="corridor">Corridor Focus</button>
+            <button class="chip" data-view="terrain">Terrain</button>
+            <button class="chip" data-view="cells">Risk Grid</button>
+          </div>
+          <div class="toolbar-group layer-inline-group">
+            <label for="layer-select">Grid Layer</label>
+            <select id="layer-select">
+              <option value="risk">Final Risk</option>
+              <option value="elevation">Elevation</option>
+              <option value="slope">Slope</option>
+              <option value="wind">Wind Speed</option>
+              <option value="dryness">Fuel Dryness</option>
+            </select>
+          </div>
+          <div class="toolbar-group toggle-group">
+            <button id="toggle-lines" class="chip active">Curved Corridors</button>
+            <button id="toggle-watchpoints" class="chip">Watch Zones</button>
+            <button id="toggle-hotspots" class="chip">Hotspot Halo</button>
+          </div>
+        </div>
         <div class="map-wrap leaflet-wrap">
           <div id="map"></div>
+          <div id="map-popup-card" class="map-popup-card hidden"></div>
         </div>
       </section>
 
       <aside class="right-panel glass">
         <div class="panel-header">
           <h2>Selection Detail</h2>
-          <p>Click a heat zone, grid cell, or corridor segment to inspect the active frame.</p>
+          <p>Risk level, level-2 distribution, major drivers, and forward development are summarized here.</p>
         </div>
         <div id="cell-detail" class="detail-card"></div>
         <div class="panel-header compact">
           <h2>Next 8 Hours</h2>
-          <p>Simulated hourly forecast for the selected point or sector. This can be replaced later with a real forecast feed.</p>
+          <p>Simulated hourly forecast for the selected location. A client can replace this later with a real source.</p>
         </div>
         <div id="forecast-panel" class="forecast-panel"></div>
         <div class="panel-header compact">
