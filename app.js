@@ -217,9 +217,9 @@
           <strong>${point.name}</strong>
           <span class="station-popup-badge" style="background:${current.color};">${riskLabel(current.level)}</span>
         </div>
-        <div class="station-popup-sub">Fixed monitoring point ? Linked sector ${base.village}</div>
+        <div class="station-popup-sub">Fixed monitoring point / Linked sector ${base.village}</div>
         <div class="station-popup-risk">${(current.final_risk * 100).toFixed(1)}% current risk</div>
-        <div class="station-popup-meta">Wind ${current.wind_ms.toFixed(1)} m/s ? Humidity ${current.humidity_pct.toFixed(0)}%</div>
+        <div class="station-popup-meta">Wind ${current.wind_ms.toFixed(1)} m/s / Humidity ${current.humidity_pct.toFixed(0)}%</div>
         <div class="station-popup-factors">Main drivers: ${cellDrivers(base, current).join(", ")}</div>
       </div>
     `;
@@ -604,7 +604,7 @@
               <span class="forecast-chip" style="background:${item.color};">${riskLabel(item.level)}</span>
               <strong>${(item.risk * 100).toFixed(0)}%</strong>
             </div>
-            <p>Wind ${item.wind.toFixed(1)} m/s ? Dryness ${item.dryness.toFixed(1)} ? Spread ${(item.spread * 100).toFixed(0)}%</p>
+            <p>Wind ${item.wind.toFixed(1)} m/s / Dryness ${item.dryness.toFixed(1)} / Spread ${(item.spread * 100).toFixed(0)}%</p>
           </div>
         `).join("")}
       </div>
